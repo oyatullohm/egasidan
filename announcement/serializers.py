@@ -9,7 +9,7 @@ class CategorySerializer(serializers.ModelSerializer):
     
     def get_img(self, obj):
         if obj.img and hasattr(obj.img, 'url'):
-            return f"https://akmalfarm.uz{obj.img.url}"
+            return f"{obj.img.url}"
         return None
 
 
@@ -22,7 +22,7 @@ class SubCategorySerializer(serializers.ModelSerializer):
     
     def get_img(self, obj):
         if obj.img and hasattr(obj.img, 'url'):
-            return f"https://akmalfarm.uz{obj.img.url}"
+            return f"{obj.img.url}"
         return None
     
     
