@@ -79,7 +79,7 @@ class SubCategoryViewSet(viewsets.ModelViewSet):
         data = request.data 
         id = kwargs['pk']
         name = data.get('name')
-        img = data.get('img')
+        
         try:
             category = SubCategory.objects.get(id=id)
             category.name = name
@@ -158,7 +158,10 @@ class RegionViewSet(viewsets.ModelViewSet):
                 "success": False
             })
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
+@method_decorator(csrf_exempt, name='dispatch')
 class DistrictViewSet(viewsets.ModelViewSet):
     serializer_class = DistrictSerializer
     http_method_names = ['post', 'put', 'delete'] 
