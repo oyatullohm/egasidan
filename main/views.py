@@ -20,6 +20,23 @@ def get_user(request):
     serializer = UserSerializer(user, many = False)
     return Response(serializer.data)
 
+@api_view(['POST'])
+def user_is_staff(request, pk):
+    try:
+        user = CustomUser.objects.get(id=pk)
+    except CustomUser.DoesNotExist:
+        return Response({'success': False, 'error': 'User not found'}, status=404)
+
+    if not request.user.is_staff:  # faqat staff foydalanuvchilar o‘zgartira oladi
+        return Response({'success': False, 'error': 'Permission denied'}, status=403)
+
+    staff = request.data.get('is_staff')  
+    if staff is not None:  
+        user.is_staff = bool(int(staff))  
+        user.save()
+
+    return Response({'success': True, 'user': UserSerializer(user).data})
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

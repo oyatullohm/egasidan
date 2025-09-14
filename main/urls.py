@@ -24,6 +24,7 @@ urlpatterns = [
     path('get-user/',get_user, name='get_user'),
     path('password-update/', password_update, name='password_update'),
     path('user-update/',user_update, name='get_update'),
+    path('user-is-staff/<int:pk>/',user_is_staff, name='user_is_staff'),
     
     
 ]
