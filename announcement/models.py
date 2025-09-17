@@ -400,6 +400,9 @@ class Property(BaseProduct):
     
     def __str__(self):
         return f"{self.get_property_type_display()} - {self.rooms} xona"
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
 
 # elektronika va maishiy texnika
 class Electronics(BaseProduct):
@@ -593,6 +596,9 @@ class Electronics(BaseProduct):
     
     def __str__(self):
         return f"{self.brand} {self.model}"
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
 
 # Ish o'rinlari
 class Job(BaseProduct):
@@ -662,6 +668,9 @@ class Job(BaseProduct):
     
     def __str__(self):
         return f" {self.company}"
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
 
 # Xizmatlar
 class Service(BaseProduct):
@@ -858,6 +867,11 @@ class Service(BaseProduct):
     
     def __str__(self):
         return f"{self.get_service_type_display()} "
+
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
+
 
 # Maishiy texnika va uy-ro'zg'or buyumlari
 class HouseholdItems(BaseProduct):
@@ -1099,6 +1113,10 @@ class HouseholdItems(BaseProduct):
     experience_years = models.PositiveIntegerField(default=0)
     def __str__(self):
         return f"{self.model}"
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
+
 
 # Sport  uchun e'lonlar modeli
 class SportingGoods(BaseProduct):
@@ -1196,6 +1214,10 @@ class SportingGoods(BaseProduct):
 
     def __str__(self):
         return f"{self.brand} {self.model}"
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
+
 
 # Hayvonlar uchun e'lonlar modeli
 class Pet(BaseProduct):
@@ -1254,7 +1276,9 @@ class Pet(BaseProduct):
 
     def __str__(self):
         return f"{self.breed}"
-
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')

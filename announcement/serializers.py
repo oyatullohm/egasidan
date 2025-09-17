@@ -79,7 +79,7 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'property_type', 'category', 'district','image',
+            'property_type', 'category', 'district','image_urls',
             'views_count', 'sold',"area","rooms",'content_type'
         ]
         depth = True
@@ -95,7 +95,7 @@ class ElectronicsSerializer(serializers.ModelSerializer):
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'category', 'district','image',
+            'category', 'district','image_urls',
             'views_count', 'sold','electronic_type','brand','model',
             'warranty','warranty_months', 'content_type'
         ]
@@ -111,7 +111,7 @@ class JobSerializer(serializers.ModelSerializer):
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'category', 'district','image','telegram',
+            'category', 'district','image_urls','telegram',
             'views_count', 'sold','job_type','company',
             'application_deadline','remote_work','content_type'
         ]
@@ -127,7 +127,7 @@ class ServiceSerializer(serializers.ModelSerializer):
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'category', 'district','image',
+            'category', 'district','image_urls',
             'views_count', 'sold','service_type','experience_years',
             'availability','content_type'
         ]
@@ -143,7 +143,7 @@ class HouseholdItemsSerializer(serializers.ModelSerializer):
         fields = [
              'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'category', 'district','image',
+            'category', 'district','image_urls',
             'views_count', 'sold','hourse_type','model','experience_years',
             'content_type'
         ]
@@ -175,7 +175,7 @@ class PetSerializer(serializers.ModelSerializer):
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'category', 'district','image',
+            'category', 'district','image_urls',
             'views_count', 'sold','animal_type','breed','age','content_type'
         ]
 
