@@ -37,8 +37,8 @@ urlpatterns = [
     path('get-sport-type/', get_sport_type),
     path('get-animal-type/', get_animal_type),
     
-    path('get-carbrand/', get_brand),
-    path('get-carmodel/<int:pk>/', get_model),
+    path('get-brand/', get_brand),
+    path('get-model/<int:pk>/', get_model),
     # path('get-sold/', get_sold),
     
 ]
