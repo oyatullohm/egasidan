@@ -228,7 +228,10 @@ class Vehicle(BaseProduct):
     
     def __str__(self):
         return f"{self.brand} {self.model} ({self.year})"
-
+    @property
+    def image_urls(self):
+        return [img.image.url for img in self.image.all()]
+        
 # ko'chmas mulk
 class Property(BaseProduct):
     PROPERTY_TYPES = [

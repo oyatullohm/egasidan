@@ -62,7 +62,7 @@ class VehicleSerializer(serializers.ModelSerializer):
             'produced','phone_number','is_active','views_count',
             'created_at','vehicle_type','brand','mileage',
             'engine_size','fuel_type','transmission','color','category',
-            'district','model','image','sold','content_type'
+            'district','model','image_urls','sold','content_type'
             
         ]
         # depth = True1/
