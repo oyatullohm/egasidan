@@ -56,8 +56,8 @@ def get_vehicle_type(request):
     return Response([{'name': i[0], 'value': i[1]} for i in Vehicle.VEHICLE_TYPES])
 
 @api_view(['GET'])
-def get_vehicle_type(request):
-    return Response([{'name': i[0], 'value': i[1]} for i in Vehicle.VEHICLE_TYPES])
+def get_brand_type(request):
+    return Response([{'name': i[0], 'value': i[1]} for i in Brand.BRAND_TYPE])
 
 @api_view(['GET'])
 def get_fuel_type(request):

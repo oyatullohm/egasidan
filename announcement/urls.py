@@ -39,6 +39,7 @@ urlpatterns = [
     
     path('get-brand/', get_brand),
     path('get-model/<int:pk>/', get_model),
+    path('get-brand-type/', get_brand_type),
     # path('get-sold/', get_sold),
     
 ]

@@ -216,8 +216,9 @@ class BrandViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         name = data.get('name')
+        type = data.get('type')
        
-        brand = Brand.objects.create(name=name)
+        brand = Brand.objects.create(name=name,type=type)
         return Response({
              'success': True,
             'data': BrandSerializer(brand, many = False).data
