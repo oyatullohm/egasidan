@@ -42,7 +42,7 @@ def get_brand(request):
 
 @api_view(['GET'])
 def get_model(request, pk):
-    carmodel = Modell.objects.filter(car_brand_id=pk).select_related('car_brand')
+    carmodel = Modell.objects.filter(brand_id=pk).select_related('brand')
     serializer = ModellSerializer(carmodel, many=True )
     return Response(serializer.data)
 
