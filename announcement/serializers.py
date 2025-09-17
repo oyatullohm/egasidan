@@ -41,7 +41,7 @@ class DistrictSerializer(serializers.ModelSerializer):
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
-        fields = '__all__'
+        fields = ['id','name']
 
 
 class ModellSerializer(serializers.ModelSerializer):
