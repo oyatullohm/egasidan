@@ -219,7 +219,7 @@ class Vehicle(BaseProduct):
     vehicle_type = models.CharField(max_length=55, choices=VEHICLE_TYPES )
     brand = models.CharField(max_length=100)
     model = models.ForeignKey(Modell, on_delete=models.SET_NULL, null=True, blank=True)
-    year = models.PositiveIntegerField()
+    # year = models.PositiveIntegerField()
     mileage = models.PositiveIntegerField(help_text="Km da")
     engine_size = models.DecimalField(max_digits=3, decimal_places=1, help_text="Litrda")
     fuel_type = models.CharField(max_length=55, choices=FUEL_TYPES)

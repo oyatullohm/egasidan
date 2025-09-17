@@ -363,7 +363,6 @@ class VehicleViewSet(viewsets.ModelViewSet):
             "vehicle_type": "str  url :/api/product/get-vehicle-type/",
             "brand": "str  url :/api/product/get-brand/",
             "model": "int  url :/api/product/get-model/1/",
-            "year": "int  2025",
             "mileage": "int  250000  kl ",
             "engine_size": "str  2.5 dvigatel_hajmi ",
             "fuel_type": "str  url :/api/product/get-fuel-type/",
@@ -449,7 +448,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
         vehicle_type =data.get('vehicle_type')
         brand =data.get('brand')
         model =data.get('model')
-        year =data.get('year')
+        # year =data.get('year')
         mileage =data.get('mileage')
         engine_size =data.get('engine_size')
         fuel_type =data.get('fuel_type')
@@ -469,7 +468,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
             vehicle_type = vehicle_type,
             brand = brand,
             model_id = model,
-            year = year,
+            # year = year,
             mileage = mileage,
             engine_size = engine_size,
             fuel_type = fuel_type,
