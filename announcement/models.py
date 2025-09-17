@@ -57,7 +57,7 @@ class Brand(models.Model):
         ("boshqa","boshqa"),
     ) 
     
-    type = models.CharField(max_length=100, choices=BRAND_TYPE, )
+    type = models.CharField(max_length=100, choices=BRAND_TYPE, default='avto' )
     name = models.CharField(max_length=100, unique=True)
 
 
