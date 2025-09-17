@@ -60,7 +60,7 @@ class VehicleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'description','price','condition','address',
             'produced','phone_number','is_active','views_count',
-            'created_at','vehicle_type','brand','year','mileage',
+            'created_at','vehicle_type','brand','mileage',
             'engine_size','fuel_type','transmission','color','category',
             'district','model','image','sold','content_type'
             
