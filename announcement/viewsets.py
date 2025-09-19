@@ -34,17 +34,23 @@ class CategoryViewSet(viewsets.ModelViewSet):
                     "success": True,
                     "data": serializer.data
                 })
-        except:
+        
+        except Exception as e:
             return Response({
-                "success": False
-            })
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400) 
     def destroy(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
             category = Category.objects.get(id=id)
-            category.img.delete()
+            if category.img:
+                try:
+                    category.img.delete(save=False)
+                except: pass
+                    
             category.delete()
-            
+
             return Response({
                 "success": True,
                 
