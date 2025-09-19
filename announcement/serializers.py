@@ -194,6 +194,7 @@ PRODUCT_SERIALIZERS = {
             Pet: PetSerializer,
             }
 
+
 class FavoriteSerializer(serializers.ModelSerializer):
     # content_type = serializers.SerializerMethodField()
     product = serializers.SerializerMethodField()

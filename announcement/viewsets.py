@@ -1887,3 +1887,6 @@ class FavoriteViewSet(viewsets.ModelViewSet):
             'success': True,
             'message': 'Favorite item removed successfully.'
         })
+
+
+

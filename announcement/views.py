@@ -4,6 +4,31 @@ from .models import *
 from rest_framework.response import Response
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
+from .decorators import IsStaff
+
+
+
+@api_view(["POST"])
+@permission_classes([IsStaff])
+def is_acttive_true_false(request):
+    try:
+        obj_id = request.data['id']
+        is_active = request.data.get("is_active") 
+        content_type_id = request.data['content_type']
+        content_type = ContentType.objects.get(id=content_type_id) 
+        model_class = content_type.model_class()
+        obj = model_class.objects.get(id=obj_id)
+        obj.is_active = bool(int(is_active))
+        obj.save()
+        return Response({"success": True})
+    
+    except Exception as e:
+        return Response({
+            "success": False,
+            "error": str(e)
+        }, status=400)
+
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny]) 
