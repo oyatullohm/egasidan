@@ -25,21 +25,26 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         try:
-            data = request.data 
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-        
-        except Exception as e:
+            instance = Category.objects.get(id=kwargs['pk'])
+        except Category.DoesNotExist:
             return Response({
-            "success": False,
-            "error": str(e)  # aynan xato matnini qaytaradi
-        }, status=400) 
+                "success": False,
+                "error": "Category topilmadi"
+            }, status=404)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            }, status=200)
+        else:
+            return Response({
+                "success": False,
+                "errors": serializer.errors
+            }, status=400)
     def destroy(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
