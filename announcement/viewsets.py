@@ -35,16 +35,21 @@ class CategoryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
 
         if serializer.is_valid():
+            # Agar yangi rasm kelgan bo‘lsa, eski rasmni o‘chirib yuboramiz
+            if 'img' in request.FILES:
+                if instance.img and instance.img.name:
+                    instance.img.delete(save=False)
+
             serializer.save()
             return Response({
                 "success": True,
                 "data": serializer.data
             }, status=200)
-        else:
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            }, status=400)
+
+        return Response({
+            "success": False,
+            "errors": serializer.errors
+        }, status=400)
     def destroy(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
