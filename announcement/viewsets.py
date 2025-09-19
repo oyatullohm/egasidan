@@ -3,6 +3,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
+from rest_framework import status
 from .serializers import *
 from .decorators import *
 from .models import *
@@ -30,26 +31,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return Response({
                 "success": False,
                 "error": "Category topilmadi"
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        # 🔹 oddiy text maydonlarini update qilish
+        name = request.data.get("name")
+        if name:
+            instance.name = name
 
-        if serializer.is_valid():
-            # Agar yangi rasm kelgan bo‘lsa, eski rasmni o‘chirib yuboramiz
-            if 'img' in request.FILES:
-                if instance.img and instance.img.name:
-                    instance.img.delete(save=False)
+        if "img" in request.FILES:
+            if instance.img and instance.img.name:
+                instance.img.delete(save=False)  # eski rasmni o‘chirib tashlaymiz
+            instance.img = request.FILES["img"]
 
-            serializer.save()
-            return Response({
-                "success": True,
-                "data": serializer.data
-            }, status=200)
+        instance.save()
 
         return Response({
-            "success": False,
-            "errors": serializer.errors
-        }, status=400)
+            "success": True,
+            "data": {
+                "id": instance.id,
+                "name": instance.name,
+                "img": instance.img.url if instance.img else None
+            }
+        }, status=status.HTTP_200_OK)
     def destroy(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
