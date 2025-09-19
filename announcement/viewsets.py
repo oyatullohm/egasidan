@@ -49,10 +49,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 "success": True,
                 
             })
-        except:
+        except Exception as e:
             return Response({
-                "success": False
-            })
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)  
 
 
 class SubCategoryViewSet(viewsets.ModelViewSet):
