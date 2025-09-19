@@ -24,21 +24,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
         })
 
     def update(self, request, *args, **kwargs):
-        data = request.data 
-        id = kwargs['pk']
-        name = data.get('name')
-        img = data.get('img')
         try:
-            category = Category.objects.get(id=id)
-            category.name = name
-            category.img.delete()
-            category.img = img
-            category.save()
-    
-            return Response({
-                "success": True,
-                'data': CategorySerializer(category, many = False).data
-            })
+            data = request.data 
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=data, partial=True)  
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "success": True,
+                    "data": serializer.data
+                })
         except:
             return Response({
                 "success": False
