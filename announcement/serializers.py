@@ -57,6 +57,9 @@ class VehicleSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
+    
     class Meta:
         model = Vehicle
         fields = [
@@ -64,7 +67,8 @@ class VehicleSerializer(serializers.ModelSerializer):
             'produced','phone_number','is_active','views_count',
             'created_at','vehicle_type','brand','mileage',
             'engine_size','fuel_type','transmission','color','category',
-            'district','model','image_urls','sold','content_type','likes_count','dislikes_count'
+            'district','model','image_urls','sold','content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
             
         ]
         # depth = True1/
@@ -84,6 +88,28 @@ class VehicleSerializer(serializers.ModelSerializer):
             content_type=content_type,
             object_id=obj.id
         ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
+    
 
 class PropertySerializer(serializers.ModelSerializer):
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
