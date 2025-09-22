@@ -55,6 +55,8 @@ class VehicleSerializer(serializers.ModelSerializer):
     fuel_type = serializers.ChoiceField(choices=Vehicle.FUEL_TYPES)
     transmission = serializers.ChoiceField(choices=Vehicle.TRANSMISSION_TYPES)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
     class Meta:
         model = Vehicle
         fields = [
@@ -62,7 +64,7 @@ class VehicleSerializer(serializers.ModelSerializer):
             'produced','phone_number','is_active','views_count',
             'created_at','vehicle_type','brand','mileage',
             'engine_size','fuel_type','transmission','color','category',
-            'district','model','image_urls','sold','content_type'
+            'district','model','image_urls','sold','content_type','likes_count','dislikes_count'
             
         ]
         # depth = True1/
@@ -70,6 +72,18 @@ class VehicleSerializer(serializers.ModelSerializer):
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
 
 class PropertySerializer(serializers.ModelSerializer):
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
@@ -180,8 +194,10 @@ class PetSerializer(serializers.ModelSerializer):
         ]
 
 
+    
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
+
 
 PRODUCT_SERIALIZERS = {
             Job: JobSerializer,
@@ -201,6 +217,24 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
+        fields = [  'id','object_id',
+                  'created_at','product'
+                  ]
+  
+    def get_product(self, obj):
+        product = obj.product
+        serializer_class = PRODUCT_SERIALIZERS.get(type(product))
+        if serializer_class:
+            return serializer_class(product).data
+        return None
+    
+
+class DislikeSerializer(serializers.ModelSerializer):
+    # content_type = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Dislike
         fields = [  'id','object_id',
                   'created_at','product'
                   ]

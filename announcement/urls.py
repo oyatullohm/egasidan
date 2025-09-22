@@ -13,13 +13,15 @@ router.register(r'vehicle', VehicleViewSet, basename='vehicle')
 router.register(r'image', ImageViewSet, basename='image')
 router.register(r'brand', BrandViewSet, basename='carbrand')
 router.register(r'model', ModellViewSet, basename='carmodel')
+router.register(r"service", ServiceViewSrt, basename='service')
 router.register(r"property", PropertyViewSet, basename='property')
 router.register(r"electronic", ElectronicsViewSet, basename='electronic')
 router.register(r"job", JobViewSet, basename='job')
 router.register(r"sport", SportingGoodsViewSet, basename='sport')
-router.register(r"hurse", HouseholdItemsViewSet, basename='hourse')
+router.register(r"hourse", HouseholdItemsViewSet, basename='hourse')
 router.register(r"pet", PetViewSet, basename='pet')
-router.register(r"favorite", FavoriteViewSet, basename='favorite')
+router.register(r"like", FavoriteViewSet, basename='like')
+router.register(r"dislike", DislikeViewSet, basename='dislike')
 
 urlpatterns = [
     path('get-category/', get_category),

@@ -1889,4 +1889,60 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         })
 
 
+class DislikeViewSet(viewsets.ModelViewSet):
+    serializer_class = DislikeSerializer 
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        
+        return Response({
+            "success": True,
+            "data": DislikeSerializer(self.get_queryset(), many=True).data
+        })
+
+    @action(methods=['get'], detail=False)
+    def count(self, request):
+        user = request.user
+        favorite_count = Dislike.objects.filter(user=user).count()
+        return Response({
+            'success': True,
+            'dislike_count': favorite_count
+        })
+    
+    def get_queryset(self):
+        return Dislike.objects.filter(user=self.request.user).select_related("user").order_by('-id')
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        content_type = data.get('content_type')  # masalan: "job"
+        object_id = data.get('object_id')
+
+        try:
+            content_type = ContentType.objects.get(id=content_type)
+           
+        except ContentType.DoesNotExist:
+            return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
+
+        favorite, created = Dislike.objects.get_or_create(
+            user=request.user,
+            content_type=content_type,
+            object_id=object_id
+        )
+
+        if not created:
+            return Response({
+                'success': False,
+                'message': "hatolik: Bu mahsulot allaqachon Dislike qo'shilgan."
+            })
+
+        return Response({'success': True, 'message': 'Dislike qo‘shildi'})
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'success': True,
+            'message': 'Dislike item removed successfully.'
+        })
+
 

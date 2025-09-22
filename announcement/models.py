@@ -1280,6 +1280,7 @@ class Pet(BaseProduct):
     def image_urls(self):
         return [img.image.url for img in self.image.all()]
 
+
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -1295,3 +1296,17 @@ class Favorite(models.Model):
     def __str__(self):
         return f"{self.user} - {self.product}"
 
+class Dislike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dislike')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    product = GenericForeignKey('content_type', 'object_id')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'content_type', 'object_id')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.product}"
