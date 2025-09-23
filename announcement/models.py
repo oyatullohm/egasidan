@@ -227,7 +227,7 @@ class Vehicle(BaseProduct):
     color = models.CharField(max_length=50)
     
     def __str__(self):
-        return f"{self.brand} {self.model} ({self.year})"
+        return f"{self.brand} {self.model} "
     @property
     def image_urls(self):
         return [img.image.url for img in self.image.all()]
