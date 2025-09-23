@@ -92,26 +92,15 @@ class VehicleSerializer(serializers.ModelSerializer):
     
     def get_is_liked(self, obj):
         request = self.context.get("request")
-        # if request and request.user.is_authenticated:
-        return request.user
-            # content_type = ContentType.objects.get_for_model(obj)
-            # return Favorite.objects.filter(
-            #     user=request.user,
-            #     content_type=content_type,
-            #     object_id=obj.id
-            # ).exists()
-        # return False
-    
-    # def get_is_liked(self, obj):
-    #     request = self.context.get("request")  # requestdan user olish
-    #     if request and request.user.is_authenticated:
-    #         content_type = ContentType.objects.get_for_model(obj)
-    #         return Favorite.objects.filter(
-    #             user=request.user,
-    #             content_type=content_type,
-    #             object_id=obj.id
-    #         ).exists()
-    #     return False
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
     
     def get_is_disliked(self, obj):
         request = self.context.get('request')

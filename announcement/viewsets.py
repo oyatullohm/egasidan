@@ -353,7 +353,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = VehicleSerializer(result_page, many=True)
+        serializer = VehicleSerializer(result_page, many=True, context={'request': request})
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
