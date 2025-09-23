@@ -112,16 +112,16 @@ class VehicleSerializer(serializers.ModelSerializer):
     #         ).exists()
     #     return False
     
-    # def get_is_disliked(self, obj):
-    #     request = self.context.get('request')
-    #     if request and request.user.is_authenticated:
-    #         content_type = ContentType.objects.get_for_model(obj)
-    #         return Dislike.objects.filter(
-    #             content_type=content_type,
-    #             object_id=obj.id,
-    #             user=request.user
-    #         ).exists()
-    #     return False
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
     
 
 class PropertySerializer(serializers.ModelSerializer):
