@@ -92,15 +92,15 @@ class VehicleSerializer(serializers.ModelSerializer):
     
     def get_is_liked(self, obj):
         request = self.context.get("request")
-        if request and request.user.is_authenticated:
-            return request.user.id
+        # if request and request.user.is_authenticated:
+        return request.user.id
             # content_type = ContentType.objects.get_for_model(obj)
             # return Favorite.objects.filter(
             #     user=request.user,
             #     content_type=content_type,
             #     object_id=obj.id
             # ).exists()
-        return False
+        # return False
     
     # def get_is_liked(self, obj):
     #     request = self.context.get("request")  # requestdan user olish
