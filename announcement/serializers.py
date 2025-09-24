@@ -50,6 +50,13 @@ class ModellSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class VehiclelistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
+
 class VehicleSerializer(serializers.ModelSerializer):
     vehicle_type = serializers.ChoiceField(choices=Vehicle.VEHICLE_TYPES)
     fuel_type = serializers.ChoiceField(choices=Vehicle.FUEL_TYPES)
@@ -114,6 +121,13 @@ class VehicleSerializer(serializers.ModelSerializer):
         return False
     
 
+class PropertylistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Property
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
+
 class PropertySerializer(serializers.ModelSerializer):
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
     content_type = serializers.SerializerMethodField()
@@ -171,6 +185,14 @@ class PropertySerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
+
+class ElectronicslistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Electronics
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
+
 class ElectronicsSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -226,7 +248,15 @@ class ElectronicsSerializer(serializers.ModelSerializer):
                 user=request.user
             ).exists()
         return False
+
     
+class JoblistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
+
 class JobSerializer(serializers.ModelSerializer):
     job_type= serializers.ChoiceField(choices=Job.JOB_TYPES)
     content_type = serializers.SerializerMethodField()
@@ -285,6 +315,13 @@ class JobSerializer(serializers.ModelSerializer):
         return False
     
     
+class ServicelistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
+
 class ServiceSerializer(serializers.ModelSerializer):
     service_type= serializers.ChoiceField(choices=Service.SERVICE_TYPES)
     content_type = serializers.SerializerMethodField()
@@ -342,6 +379,13 @@ class ServiceSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
+
+class HouseholdItemslistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HouseholdItems
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
 
 class HouseholdItemsSerializer(serializers.ModelSerializer):
     hourse_type= serializers.ChoiceField(choices=HouseholdItems.HOUSEHOLD_TYPES)
@@ -401,7 +445,15 @@ class HouseholdItemsSerializer(serializers.ModelSerializer):
                 user=request.user
             ).exists()
         return False
-    
+
+  
+class SportingGoodslistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SportingGoods
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
+
 class SportingGoodsSerializer(serializers.ModelSerializer):
     sport_type= serializers.ChoiceField(choices=SportingGoods.SPORT_TYPE)
     content_type = serializers.SerializerMethodField()
@@ -458,6 +510,13 @@ class SportingGoodsSerializer(serializers.ModelSerializer):
                 user=request.user
             ).exists()
         return False
+
+class PetListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pet
+        fields = [
+            'id','description', 'price', 'old_price','condition',
+            ]
 
 class PetSerializer(serializers.ModelSerializer):
     animal_type= serializers.ChoiceField(choices=Pet.ANIMAL_TYPE)
@@ -517,6 +576,7 @@ class PetSerializer(serializers.ModelSerializer):
                 user=request.user
             ).exists()
         return False
+
 
 PRODUCT_SERIALIZERS = {
             Job: JobSerializer,

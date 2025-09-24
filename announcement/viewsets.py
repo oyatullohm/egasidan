@@ -8,7 +8,7 @@ from rest_framework import status
 from .serializers import *
 from .decorators import *
 from .models import *
-P_NUM = 2
+P_NUM = 20
 
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
@@ -354,7 +354,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = VehicleSerializer(result_page, many=True, context={'request': request})
+        serializer = VehiclelistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -566,7 +566,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = PropertySerializer(result_page, many=True)
+        serializer = PropertylistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -645,14 +645,19 @@ class PropertyViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = []
         return [permission() for permission in permission_classes]
-    
-    
+           
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            property= Property.objects.get(id=kwargs['pk'])
+        except Property.DoesNotExist:
+            return Response({"detail": "property not found."}, status=404)
 
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        Property.objects.filter(id=property.id).update(views_count=F('views_count') + 1)
+        property.refresh_from_db()
+
+        serializer = PropertySerializer(property, context={'request': request})
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -753,7 +758,7 @@ class ElectronicsViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = ElectronicsSerializer(result_page, many=True)
+        serializer = ElectronicslistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -885,13 +890,19 @@ class ElectronicsViewSet(viewsets.ModelViewSet):
             permission_classes = []
         return [permission() for permission in permission_classes]
     
-    
+            
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
-   
+        try:
+            electronic = Electronics.objects.get(id=kwargs['pk'])
+        except Electronics.DoesNotExist:
+            return Response({"detail": "electronic not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        Electronics.objects.filter(id=electronic.id).update(views_count=F('views_count') + 1)
+        electronic.refresh_from_db()
+
+        serializer = ElectronicsSerializer(electronic, context={'request': request})
+        return Response(serializer.data)
    
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def add_img(self, request, pk=None):
@@ -948,7 +959,7 @@ class JobViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = JobSerializer(result_page, many=True)
+        serializer = JoblistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -995,11 +1006,19 @@ class JobViewSet(viewsets.ModelViewSet):
                 'data': JobSerializer(job, many = False).data
             })
     
+            
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            job = Job.objects.get(id=kwargs['pk'])
+        except Job.DoesNotExist:
+            return Response({"detail": "job not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        Job.objects.filter(id=job.id).update(views_count=F('views_count') + 1)
+        job.refresh_from_db()
+
+        serializer = JobSerializer(job, context={'request': request})
+        return Response(serializer.data)
     
     def update(self, request, *args, **kwargs):
         try:
@@ -1131,7 +1150,7 @@ class ServiceViewSrt(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = ServiceSerializer(result_page, many=True)
+        serializer = ServicelistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -1224,12 +1243,20 @@ class ServiceViewSrt(viewsets.ModelViewSet):
         else:
             permission_classes = []
         return [permission() for permission in permission_classes]
-    
+
+            
     def retrieve(self, request, *args, **kwargs):
-        service = self.get_object()
-        service.views_count += 1
-        service.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            service = Service.objects.get(id=kwargs['pk'])
+        except Service.DoesNotExist:
+            return Response({"detail": "service not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        Service.objects.filter(id=service.id).update(views_count=F('views_count') + 1)
+        service.refresh_from_db()
+
+        serializer = ServiceSerializer(service, context={'request': request})
+        return Response(serializer.data)
     
     def update(self, request, *args, **kwargs):
         try:
@@ -1316,7 +1343,7 @@ class HouseholdItemsViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = HouseholdItemsSerializer(result_page, many=True)
+        serializer = HouseholdItemslistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -1362,11 +1389,19 @@ class HouseholdItemsViewSet(viewsets.ModelViewSet):
                 'data': HouseholdItemsSerializer(household_item, many = False).data
             })
 
+            
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            hourse = HouseholdItems.objects.get(id=kwargs['pk'])
+        except HouseholdItems.DoesNotExist:
+            return Response({"detail": "hourse not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        HouseholdItems.objects.filter(id=hourse.id).update(views_count=F('views_count') + 1)
+        hourse.refresh_from_db()
+
+        serializer = HouseholdItemsSerializer(hourse, context={'request': request})
+        return Response(serializer.data)
     
     def update(self, request, *args, **kwargs):
         try:
@@ -1497,7 +1532,7 @@ class SportingGoodsViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = SportingGoodsSerializer(result_page, many=True)
+        serializer = SportingGoodslistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -1543,11 +1578,19 @@ class SportingGoodsViewSet(viewsets.ModelViewSet):
                 'data': SportingGoodsSerializer(sporting_goods, many = False).data
             })
     
+            
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            sport = SportingGoods.objects.get(id=kwargs['pk'])
+        except SportingGoods.DoesNotExist:
+            return Response({"detail": "Vehicle not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        SportingGoods.objects.filter(id=sport.id).update(views_count=F('views_count') + 1)
+        sport.refresh_from_db()
+
+        serializer = SportingGoodsSerializer(sport, context={'request': request})
+        return Response(serializer.data)
     
     def update(self, request, *args, **kwargs):
         try:
@@ -1678,7 +1721,7 @@ class PetViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = PetSerializer(result_page, many=True)
+        serializer = PetListSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data
@@ -1722,11 +1765,19 @@ class PetViewSet(viewsets.ModelViewSet):
                 'data': PetSerializer(pet, many = False).data
             })
     
+            
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            pet = Pet.objects.get(id=kwargs['pk'])
+        except Pet.DoesNotExist:
+            return Response({"detail": "Vehicle not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        Pet.objects.filter(id=pet.id).update(views_count=F('views_count') + 1)
+        pet.refresh_from_db()
+
+        serializer = PetSerializer(pet, context={'request': request})
+        return Response(serializer.data)
     
     def update(self, request, *args, **kwargs):
         try:

@@ -7,6 +7,30 @@ from rest_framework.permissions import  AllowAny, IsAuthenticated
 from .decorators import IsStaff
 
 
+@api_view(["GET"])
+def announcements_all(request):
+    vehicel = Vehicle.objects.filter(is_active=True).order_by('-id')[:20]
+    property = Property.objects.filter(is_active=True).order_by('-id')[:20]
+    electronic = Electronics.objects.filter(is_active=True).order_by('-id')[:20]
+    job =  Job.objects.filter(is_active=True).order_by('-id')[:20]
+    service = Service.objects.filter(is_active=True).order_by('-id')[:20]
+    hourse = HouseholdItems.objects.filter(is_active=True).order_by('-id')[:20]
+    sport = SportingGoods.objects.filter(is_active=True).order_by('-id')[:20]
+    pet = Pet.objects.filter(is_active=True).order_by('-id')[:20]
+    return Response(
+        {
+           'data':[
+               VehiclelistSerializer(vehicel, many = True).data,
+               PropertylistSerializer(property, many = True).data,
+               ElectronicslistSerializer(electronic, many = True).data,
+               JoblistSerializer(job, many = True).data,
+               ServicelistSerializer(service, many = True).data,
+               HouseholdItemslistSerializer(hourse, many = True).data,
+               SportingGoodslistSerializer(sport, many = True).data,
+               PetListSerializer(pet, many = True).data,
+           ] 
+        }
+    )
 
 @api_view(["POST"])
 @permission_classes([IsStaff])

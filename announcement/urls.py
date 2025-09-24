@@ -43,6 +43,7 @@ urlpatterns = [
     path('get-model/<int:pk>/', get_model),
     path('get-brand-type/', get_brand_type),
     path('is-active-true-false/', is_acttive_true_false),
+    path('announcements-all/', announcements_all),
     # path('get-sold/', get_sold),
     
 ]
