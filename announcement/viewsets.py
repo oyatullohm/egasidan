@@ -434,10 +434,17 @@ class VehicleViewSet(viewsets.ModelViewSet):
         
         
     def retrieve(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-        vehicle.views_count += 1
-        vehicle.save()
-        return super().retrieve(request, *args, **kwargs)
+        try:
+            vehicle = Vehicle.objects.get(id=kwargs['pk'])
+        except Vehicle.DoesNotExist:
+            return Response({"detail": "Vehicle not found."}, status=404)
+
+        # Atomik inkrement (race condition bo‘lmasligi uchun)
+        Vehicle.objects.filter(id=vehicle.id).update(views_count=F('views_count') + 1)
+        vehicle.refresh_from_db()
+
+        serializer = VehicleSerializer(vehicle, context={'request': request})
+        return Response(serializer.data)
 
 
     def get_permissions(self):

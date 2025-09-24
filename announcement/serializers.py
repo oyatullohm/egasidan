@@ -117,21 +117,66 @@ class VehicleSerializer(serializers.ModelSerializer):
 class PropertySerializer(serializers.ModelSerializer):
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
     class Meta:
         model = Property
         fields = [
             'id', 'description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'property_type', 'category', 'district','image_urls',
-            'views_count', 'sold',"area","rooms",'content_type'
+            'views_count', 'sold',"area","rooms",'content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
         depth = True
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
 
 class ElectronicsSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
     electronic_type= serializers.ChoiceField(choices=Electronics.ELECTRONIC_TYPES)
     class Meta:
         model = Electronics
@@ -140,15 +185,55 @@ class ElectronicsSerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','electronic_type','brand','model',
-            'warranty','warranty_months', 'content_type'
+            'warranty','warranty_months', 'content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
     
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
     
 class JobSerializer(serializers.ModelSerializer):
     job_type= serializers.ChoiceField(choices=Job.JOB_TYPES)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
     class Meta:
         model = Job
         fields = [
@@ -156,15 +241,57 @@ class JobSerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls','telegram',
             'views_count', 'sold','job_type','company',
-            'application_deadline','remote_work','content_type'
+            'application_deadline','remote_work','content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
 
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
+    
+    
 class ServiceSerializer(serializers.ModelSerializer):
     service_type= serializers.ChoiceField(choices=Service.SERVICE_TYPES)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
     class Meta:
         model = Service
         fields = [
@@ -172,15 +299,58 @@ class ServiceSerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','service_type','experience_years',
-            'availability','content_type'
+            'availability','content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
+
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
 
 
 class HouseholdItemsSerializer(serializers.ModelSerializer):
     hourse_type= serializers.ChoiceField(choices=HouseholdItems.HOUSEHOLD_TYPES)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
+    
     class Meta:
         model = HouseholdItems
         fields = [
@@ -188,38 +358,122 @@ class HouseholdItemsSerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','hourse_type','model','experience_years',
-            'content_type'
+            'content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
         
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
     
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
     
 class SportingGoodsSerializer(serializers.ModelSerializer):
     sport_type= serializers.ChoiceField(choices=SportingGoods.SPORT_TYPE)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
+    
     class Meta:
         model = SportingGoods
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image',
-            'views_count', 'sold','sport_type','brand','model','content_type'
+            'views_count', 'sold','sport_type','brand','model','content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
 
 class PetSerializer(serializers.ModelSerializer):
     animal_type= serializers.ChoiceField(choices=Pet.ANIMAL_TYPE)
     content_type = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_disliked = serializers.SerializerMethodField()
     class Meta:
         model = Pet
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
-            'views_count', 'sold','animal_type','breed','age','content_type'
+            'views_count', 'sold','animal_type','breed','age','content_type',
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
 
 
@@ -227,6 +481,42 @@ class PetSerializer(serializers.ModelSerializer):
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
+    def get_likes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Favorite.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+        
+    def get_dislikes_count(self, obj):
+        content_type = ContentType.objects.get_for_model(obj)
+        return Dislike.objects.filter(
+            content_type=content_type,
+            object_id=obj.id
+        ).count()
+    
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Favorite.objects.filter(
+                user=request.user,
+                content_type=content_type,
+                object_id=obj.id
+            ).exists()
+        return False
+
+    
+    def get_is_disliked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            content_type = ContentType.objects.get_for_model(obj)
+            return Dislike.objects.filter(
+                content_type=content_type,
+                object_id=obj.id,
+                user=request.user
+            ).exists()
+        return False
 
 PRODUCT_SERIALIZERS = {
             Job: JobSerializer,
