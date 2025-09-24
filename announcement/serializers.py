@@ -54,7 +54,7 @@ class VehiclelistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vehicle
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class VehicleSerializer(serializers.ModelSerializer):
@@ -125,7 +125,7 @@ class PropertylistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class PropertySerializer(serializers.ModelSerializer):
@@ -190,7 +190,7 @@ class ElectronicslistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Electronics
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class ElectronicsSerializer(serializers.ModelSerializer):
@@ -254,7 +254,7 @@ class JoblistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class JobSerializer(serializers.ModelSerializer):
@@ -319,7 +319,7 @@ class ServicelistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -384,7 +384,7 @@ class HouseholdItemslistSerializer(serializers.ModelSerializer):
     class Meta:
         model = HouseholdItems
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class HouseholdItemsSerializer(serializers.ModelSerializer):
@@ -451,7 +451,7 @@ class SportingGoodslistSerializer(serializers.ModelSerializer):
     class Meta:
         model = SportingGoods
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class SportingGoodsSerializer(serializers.ModelSerializer):
@@ -467,7 +467,7 @@ class SportingGoodsSerializer(serializers.ModelSerializer):
         fields = [
             'id','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
-            'category', 'district','image',
+            'category', 'district','image_urls',
             'views_count', 'sold','sport_type','brand','model','content_type',
             'likes_count','dislikes_count', 'is_liked', 'is_disliked'
         ]
@@ -515,7 +515,7 @@ class PetListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pet
         fields = [
-            'id','description', 'price', 'old_price','condition',
+            'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
 class PetSerializer(serializers.ModelSerializer):
