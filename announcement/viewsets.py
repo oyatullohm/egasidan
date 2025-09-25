@@ -1172,6 +1172,7 @@ class ServiceViewSrt(viewsets.ModelViewSet):
         availability = data.get('availability')
         
         service = Service.objects.create(
+            user=request.user,
             description=description,
             price=price,
             old_price=old_price,
