@@ -970,7 +970,7 @@ class JobViewSet(viewsets.ModelViewSet):
         description = data.get('description')
         price = data.get('price')
         old_price = data.get('old_price')
-        condition =data.get('condition')
+        # condition =data.get('condition')
         category =data.get('category')
         district =data.get('district')
         image =request.FILES.get('image') 
@@ -986,7 +986,7 @@ class JobViewSet(viewsets.ModelViewSet):
             description = description,
             price = price,
             old_price = old_price,
-            condition = condition,
+            # condition = condition,
             category_id = category,
             district_id = district,
             address = address,
