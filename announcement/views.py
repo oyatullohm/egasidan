@@ -33,13 +33,13 @@ def announcements_all(request):
     all_data = []
     for model, serializer in model_serializer_map:
         queryset = model.objects.filter(**filters).order_by("-id")
-        s = [serializer(queryset, many=True).data]
-        if s:
-            all_data += s
+        serialized = [serializer(queryset, many=True).data]
+        if serialized:
+            all_data += serialized
 
     # Paginatsiya
     paginator = PageNumberPagination()
-    paginator.page_size = 4  # har bir sahifada 20 tadan
+    paginator.page_size = 2  # har bir sahifada 20 tadan
     result_page = paginator.paginate_queryset(all_data, request)
 
     return paginator.get_paginated_response(result_page)
