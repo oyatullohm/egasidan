@@ -18,7 +18,7 @@ def announcements_all(request):
 
     region = request.query_params.get("region")
     if region:
-        filters["region_id"] = region
+        filters["district__region_id"] = region
     model_serializer_map = [
         (Vehicle, VehiclelistSerializer),
         (Property, PropertylistSerializer),
