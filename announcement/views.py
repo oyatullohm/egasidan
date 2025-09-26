@@ -56,18 +56,29 @@ def announcements_user(request):
     hourse = HouseholdItems.objects.filter(user=request.user).order_by('-id')
     sport = SportingGoods.objects.filter(user=request.user).order_by('-id')
     pet = Pet.objects.filter(user=request.user).order_by('-id')
+    
+    data = []
+    if vehicel:
+        data +=VehiclelistSerializer(vehicel, many = True).data,
+    if property:
+        data += PropertylistSerializer(property, many = True).data,
+    if electronic:
+        data += ElectronicslistSerializer(electronic, many = True).data,
+    if job:
+        data += JoblistSerializer(job, many = True).data,
+    if service:
+        data += ServicelistSerializer(service, many = True).data,
+    if hourse:
+        data += HouseholdItemslistSerializer(hourse, many = True).data,
+    if sport:
+        data += SportingGoodslistSerializer(sport, many = True).data,
+    if pet:
+        data += PetlistSerializer(pet, many = True).data,  
+
+           
     return Response(
         {
-           'data':[
-               VehiclelistSerializer(vehicel, many = True).data,
-               PropertylistSerializer(property, many = True).data,
-               ElectronicslistSerializer(electronic, many = True).data,
-               JoblistSerializer(job, many = True).data,
-               ServicelistSerializer(service, many = True).data,
-               HouseholdItemslistSerializer(hourse, many = True).data,
-               SportingGoodslistSerializer(sport, many = True).data,
-               PetlistSerializer(pet, many = True).data,
-           ] 
+          'data': data
         }
     ) 
 
