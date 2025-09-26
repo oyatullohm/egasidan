@@ -57,6 +57,7 @@ class VehiclelistSerializer(serializers.ModelSerializer):
             'id','description', 'price', 'old_price','condition','image_urls'
             ]
 
+
 class VehicleSerializer(serializers.ModelSerializer):
     vehicle_type = serializers.ChoiceField(choices=Vehicle.VEHICLE_TYPES)
     fuel_type = serializers.ChoiceField(choices=Vehicle.FUEL_TYPES)
