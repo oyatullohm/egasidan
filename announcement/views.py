@@ -37,7 +37,7 @@ def announcements_all(request):
 
     # Paginatsiya
     paginator = PageNumberPagination()
-    paginator.page_size = 20  # har bir sahifada 20 tadan
+    paginator.page_size = 4  # har bir sahifada 20 tadan
     result_page = paginator.paginate_queryset(all_data, request)
 
     return paginator.get_paginated_response(result_page)
