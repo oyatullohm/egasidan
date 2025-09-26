@@ -5,18 +5,55 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
 from .decorators import IsStaff
-
+from rest_framework.pagination import PageNumberPagination
 
 @api_view(["GET"])
 def announcements_all(request):
-    vehicel = Vehicle.objects.filter(is_active=True).order_by('-id')[:20]
-    property = Property.objects.filter(is_active=True).order_by('-id')[:20]
-    electronic = Electronics.objects.filter(is_active=True).order_by('-id')[:20]
-    job =  Job.objects.filter(is_active=True).order_by('-id')[:20]
-    service = Service.objects.filter(is_active=True).order_by('-id')[:20]
-    hourse = HouseholdItems.objects.filter(is_active=True).order_by('-id')[:20]
-    sport = SportingGoods.objects.filter(is_active=True).order_by('-id')[:20]
-    pet = Pet.objects.filter(is_active=True).order_by('-id')[:20]
+    filters = {"is_active": True}
+
+    # query_params tekshirish
+    district = request.query_params.get("district")
+    if district:
+        filters["district_id"] = district
+
+    region = request.query_params.get("region")
+    if region:
+        filters["region_id"] = region
+    model_serializer_map = [
+        (Vehicle, VehiclelistSerializer),
+        (Property, PropertylistSerializer),
+        (Electronics, ElectronicslistSerializer),
+        (Job, JoblistSerializer),
+        (Service, ServicelistSerializer),
+        (HouseholdItems, HouseholdItemslistSerializer),
+        (SportingGoods, SportingGoodslistSerializer),
+        (Pet, PetlistSerializer),
+    ]
+
+    all_data = []
+    for model, serializer in model_serializer_map:
+        queryset = model.objects.filter(**filters).order_by("-id")
+        all_data += serializer(queryset, many=True).data
+
+    # Paginatsiya
+    paginator = PageNumberPagination()
+    paginator.page_size = 20  # har bir sahifada 20 tadan
+    result_page = paginator.paginate_queryset(all_data, request)
+
+    return paginator.get_paginated_response(result_page)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def announcements_user(request):
+    vehicel = Vehicle.objects.filter(user=request.user).order_by('-id')
+    property = Property.objects.filter(user=request.user).order_by('-id')
+    electronic = Electronics.objects.filter(user=request.user).order_by('-id')
+    job =  Job.objects.filter(user=request.user).order_by('-id')
+    service = Service.objects.filter(user=request.user).order_by('-id')
+    hourse = HouseholdItems.objects.filter(user=request.user).order_by('-id')
+    sport = SportingGoods.objects.filter(user=request.user).order_by('-id')
+    pet = Pet.objects.filter(user=request.user).order_by('-id')
     return Response(
         {
            'data':[
@@ -27,10 +64,11 @@ def announcements_all(request):
                ServicelistSerializer(service, many = True).data,
                HouseholdItemslistSerializer(hourse, many = True).data,
                SportingGoodslistSerializer(sport, many = True).data,
-               PetListSerializer(pet, many = True).data,
+               PetlistSerializer(pet, many = True).data,
            ] 
         }
-    )
+    ) 
+
 
 @api_view(["POST"])
 @permission_classes([IsStaff])

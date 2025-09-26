@@ -1722,7 +1722,7 @@ class PetViewSet(viewsets.ModelViewSet):
         paginator.page_size = P_NUM
         result_page = paginator.paginate_queryset(self.queryset, request)
 
-        serializer = PetListSerializer(result_page, many=True)
+        serializer = PetlistSerializer(result_page, many=True)
         return paginator.get_paginated_response({
             "success": True,
             "data": serializer.data

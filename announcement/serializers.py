@@ -511,7 +511,7 @@ class SportingGoodsSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
-class PetListSerializer(serializers.ModelSerializer):
+class PetlistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pet
         fields = [
@@ -579,14 +579,14 @@ class PetSerializer(serializers.ModelSerializer):
 
 
 PRODUCT_SERIALIZERS = {
-            Job: JobSerializer,
-            Vehicle: VehicleSerializer,
-            Property: PropertySerializer,
-            Electronics: ElectronicsSerializer,
-            Service: ServiceSerializer,
-            HouseholdItems: HouseholdItemsSerializer,
-            SportingGoods: SportingGoodsSerializer,
-            Pet: PetSerializer,
+            Job: JoblistSerializer,
+            Vehicle: VehiclelistSerializer,
+            Property: PropertylistSerializer,
+            Electronics: ElectronicslistSerializer,
+            Service: ServicelistSerializer,
+            HouseholdItems: HouseholdItemslistSerializer,
+            SportingGoods: SportingGoodslistSerializer,
+            Pet: PetlistSerializer,
             }
 
 
