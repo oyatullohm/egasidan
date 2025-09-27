@@ -171,6 +171,82 @@ class GoogleLoginAPIView(APIView):
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def chat_create(request):
+    user_1 = request.user
+    user_2_id = request.data.get('user_2_id')
 
+    try:
+        user_2 = User.objects.get(id=user_2_id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        
+    if user_1.id == user_2.id:
+        return Response({'error': 'Cannot create chat with yourself'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # ChatRoom nomini yaratish (kichik ID birinchi bo'lishi kerak)
+    ids = sorted([user_1.id, user_2.id])
+    room_name = f"chat_{ids[0]}_{ids[1]}"
+
+    chat_room, created = ChatRoom.objects.get_or_create(
+        user_1__in=[user_1, user_2],
+        user_2__in=[user_1, user_2],
+        defaults={'user_1': user_1, 'user_2': user_2, 'owner': user_1, 'room_name': room_name}
+    )
+
+    serializer = ChatRoomSerializer(chat_room)
+    return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def chat_list(request):
+    user = request.user
+    chats = ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user)).select_related('user_1', 'user_2')
+    serializer = ChatRoomSerializer(chats, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def message_create(request, message_id):
+    user = request.user
+    try:
+        chat_room = ChatRoom.objects.get(id=message_id)
+    except ChatRoom.DoesNotExist:
+        return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if user != chat_room.user_1 and user != chat_room.user_2:
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+    content = request.data.get('content', '')
+    image = request.FILES.get('image', None)
+
+    message = Message.objects.create(
+        user_1=chat_room.user_1,
+        user_2=chat_room.user_2,
+        room=chat_room,
+    )
+    if content:
+        message.content = content
+    if image:
+        message.image = image
+    message.save()
+
+    serializer = MessageSerializer(message)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def message_list(request, message_id):
+    user = request.user
+    try:
+        chat_room = ChatRoom.objects.get(id=message_id)
+    except ChatRoom.DoesNotExist:
+        return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if user != chat_room.user_1 and user != chat_room.user_2:
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+    messages = Message.objects.filter(room=chat_room).select_related('user_1', 'user_2').order_by('timestamp')
+    serializer = MessageSerializer(messages, many=True)
+    return Response(serializer.data)

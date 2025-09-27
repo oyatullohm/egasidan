@@ -26,5 +26,9 @@ urlpatterns = [
     path('user-update/',user_update, name='get_update'),
     path('user-is-staff/<int:pk>/',user_is_staff, name='user_is_staff'),
     
+    path('chat/chat-crete/',chat_create, name='chat_crete'),
+    path('chat/chat-list/',chat_list, name='chat_list'),
+    path('chat/message-create/<int:message_id>/',message_create, name='message_create'),
+    path('chat/message-list/<int:message_id>/',message_list, name='message_list'),
     
 ]

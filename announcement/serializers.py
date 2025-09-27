@@ -139,7 +139,7 @@ class PropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
-            'id', 'description', 'price', 'old_price','condition', 'address',
+            'id', 'user', 'description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'property_type', 'category', 'district','image_urls',
             'views_count', 'sold',"area","rooms",'content_type',
@@ -204,7 +204,7 @@ class ElectronicsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Electronics
         fields = [
-            'id','description', 'price', 'old_price','condition', 'address',
+            'id', 'user','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','electronic_type','brand','model',
@@ -268,7 +268,7 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
-            'id','description', 'price', 'old_price','condition', 'address',
+            'id', 'user','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls','telegram',
             'views_count', 'sold','job_type','company',
@@ -333,7 +333,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'id','description', 'price', 'old_price','condition', 'address',
+            'id', 'user','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','service_type','experience_years',
@@ -399,7 +399,7 @@ class HouseholdItemsSerializer(serializers.ModelSerializer):
     class Meta:
         model = HouseholdItems
         fields = [
-             'id','description', 'price', 'old_price','condition', 'address',
+             'id', 'user','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','hourse_type','model','experience_years',
@@ -466,7 +466,7 @@ class SportingGoodsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SportingGoods
         fields = [
-            'id','description', 'price', 'old_price','condition', 'address',
+            'id', 'user','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','sport_type','brand','model','content_type',
@@ -529,7 +529,7 @@ class PetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pet
         fields = [
-            'id','description', 'price', 'old_price','condition', 'address',
+            'id', 'user','description', 'price', 'old_price','condition', 'address',
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','animal_type','breed','age','content_type',

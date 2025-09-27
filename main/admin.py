@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import *
 
 # class CustomUserAdmin(UserAdmin):
 #     model = CustomUser
@@ -23,3 +23,5 @@ from .models import CustomUser
 #     filter_horizontal = ('groups', 'user_permissions',)
 
 admin.site.register(CustomUser)
+admin.site.register(ChatRoom)
+admin.site.register(Message)

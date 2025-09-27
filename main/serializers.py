@@ -16,3 +16,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id','email','phone','first_name','last_name','is_staff']
+    
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ['id', 'user_1', 'user_2', 'room_name', 'image', 'content', 'timestamp', 'is_read']
+        
+class ChatRoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatRoom
+        fields = ['id', 'user_1', 'user_2', 'room_name', 'created_at']
