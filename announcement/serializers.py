@@ -58,7 +58,7 @@ class VehiclelistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/vehicle/{obj.id}/"
+        return f"/api/product/vehicle/{obj.id}/"
 
 
 class VehicleSerializer(serializers.ModelSerializer):
@@ -133,7 +133,7 @@ class PropertylistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/property/{obj.id}/"
+        return f"/api/product/property/{obj.id}/"
 
 class PropertySerializer(serializers.ModelSerializer):
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
@@ -201,7 +201,7 @@ class ElectronicslistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/electronic/{obj.id}/"
+        return f"/api/product/electronic/{obj.id}/"
         
 
 class ElectronicsSerializer(serializers.ModelSerializer):
@@ -269,7 +269,7 @@ class JoblistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/job/{obj.id}/"
+        return f"/api/product/job/{obj.id}/"
 
 class JobSerializer(serializers.ModelSerializer):
     job_type= serializers.ChoiceField(choices=Job.JOB_TYPES)
@@ -337,7 +337,7 @@ class ServicelistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/service/{obj.id}/"
+        return f"/api/product/service/{obj.id}/"
 
 class ServiceSerializer(serializers.ModelSerializer):
     service_type= serializers.ChoiceField(choices=Service.SERVICE_TYPES)
@@ -406,7 +406,7 @@ class HouseholdItemslistSerializer(serializers.ModelSerializer):
             ]
     
     def get_url(self, obj):
-        return f"/api/hourse/{obj.id}/"
+        return f"/api/product/hourse/{obj.id}/"
     
 class HouseholdItemsSerializer(serializers.ModelSerializer):
     hourse_type= serializers.ChoiceField(choices=HouseholdItems.HOUSEHOLD_TYPES)
@@ -476,7 +476,7 @@ class SportingGoodslistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/sport/{obj.id}/"
+        return f"/api/product/sport/{obj.id}/"
     
 class SportingGoodsSerializer(serializers.ModelSerializer):
     sport_type= serializers.ChoiceField(choices=SportingGoods.SPORT_TYPE)
@@ -543,7 +543,7 @@ class PetlistSerializer(serializers.ModelSerializer):
             'id','url','description', 'price', 'old_price','condition','image_urls'
             ]
     def get_url(self, obj):
-        return f"/api/pet/{obj.id}/"
+        return f"/api/product/pet/{obj.id}/"
 
 class PetSerializer(serializers.ModelSerializer):
     animal_type= serializers.ChoiceField(choices=Pet.ANIMAL_TYPE)
