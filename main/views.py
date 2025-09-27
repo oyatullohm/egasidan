@@ -222,8 +222,7 @@ def message_create(request, message_id):
     image = request.FILES.get('image', None)
 
     message = Message.objects.create(
-        user_1=chat_room.user_1,
-        user_2=chat_room.user_2,
+        sender = request.user,
         room=chat_room,
     )
     if content:
