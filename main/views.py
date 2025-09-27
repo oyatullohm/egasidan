@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from google.auth.transport import requests
 from rest_framework.views import APIView
+from django.db.models import Max
 from google.oauth2 import id_token
 from rest_framework import status
 from django.conf import settings
@@ -202,8 +203,12 @@ def chat_create(request):
 @permission_classes([IsAuthenticated])
 def chat_list(request):
     user = request.user
-    chats = ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user)).select_related('user_1', 'user_2')\
-        .order_by('-messages__timestamp').distinct()   
+    chats = (
+        ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user))
+        .annotate(last_message=Max("messages__timestamp"))  # eng so‘nggi xabar
+        .select_related("user_1", "user_2")
+        .order_by("-last_message")  # oxirgi xabar bo‘yicha saralash
+    )
     serializer = ChatRoomSerializer(chats, many=True,context={'request': request})
     return Response(serializer.data)
 
