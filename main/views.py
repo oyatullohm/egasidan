@@ -206,7 +206,7 @@ def chat_list(request):
     chats = (
         ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user))
         .annotate(last_message=Max("messages__timestamp"))  # eng so‘nggi xabar
-        .select_related("user_1", "user_2")
+        .select_related("user_1", "user_2").prefetch_related('messages')
         .order_by("-last_message")  # oxirgi xabar bo‘yicha saralash
     )
     serializer = ChatRoomSerializer(chats, many=True,context={'request': request})

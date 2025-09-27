@@ -25,12 +25,19 @@ class MessageSerializer(serializers.ModelSerializer):
         
 class ChatRoomSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
     class Meta:
         model = ChatRoom
-        fields = ['id','user', 'user_1','owner', 'user_2', 'room_name', 'created_at']
+        fields = ['id','user', 'user_1','owner','last_message', 'user_2', 'room_name', 'created_at']
     
     def get_user(self, obj):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             return UserSerializer(request.user).data
+        return None
+    
+    def get_last_message(self,obj):
+        message =  obj.messages.order_by("-timestamp").first()
+        if message:
+            return MessageSerializer(message).data
         return None
