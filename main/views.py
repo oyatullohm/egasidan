@@ -203,7 +203,7 @@ def chat_create(request):
 def chat_list(request):
     user = request.user
     chats = ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user)).select_related('user_1', 'user_2')
-    serializer = ChatRoomSerializer(chats, many=True)
+    serializer = ChatRoomSerializer(chats, many=True,contect={'request': request})
     return Response(serializer.data)
 
 @api_view(['POST'])

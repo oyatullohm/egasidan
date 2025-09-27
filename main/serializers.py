@@ -24,6 +24,13 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ['id', 'sender', 'room', 'image', 'content', 'timestamp', ]
         
 class ChatRoomSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
     class Meta:
         model = ChatRoom
-        fields = ['id', 'user_1', 'user_2', 'room_name', 'created_at']
+        fields = ['id','user', 'user_1', 'user_2', 'room_name', 'created_at']
+    
+    def get_user(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            return UserSerializer(request.user).data
+        return None
