@@ -246,6 +246,6 @@ def message_list(request, message_id):
     if user != chat_room.user_1 and user != chat_room.user_2:
         return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
-    messages = Message.objects.filter(room=chat_room).select_related('user_1', 'user_2').order_by('timestamp')
+    messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('timestamp')
     serializer = MessageSerializer(messages, many=True)
     return Response(serializer.data)
