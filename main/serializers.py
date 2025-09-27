@@ -27,7 +27,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     class Meta:
         model = ChatRoom
-        fields = ['id','user', 'user_1', 'user_2', 'room_name', 'created_at']
+        fields = ['id','user', 'user_1','owner', 'user_2', 'room_name', 'created_at']
     
     def get_user(self, obj):
         request = self.context.get('request')
