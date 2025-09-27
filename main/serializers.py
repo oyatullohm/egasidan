@@ -18,9 +18,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id','email','phone','first_name','last_name','is_staff']
     
 class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
     class Meta:
         model = Message
-        fields = ['id', 'user_1', 'user_2', 'room_name', 'image', 'content', 'timestamp', 'is_read']
+        fields = ['id', 'sender', 'room_name', 'image', 'content', 'timestamp', ]
         
 class ChatRoomSerializer(serializers.ModelSerializer):
     class Meta:
