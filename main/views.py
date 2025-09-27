@@ -202,7 +202,8 @@ def chat_create(request):
 @permission_classes([IsAuthenticated])
 def chat_list(request):
     user = request.user
-    chats = ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user)).select_related('user_1', 'user_2')
+    chats = ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user)).select_related('user_1', 'user_2')\
+        .order_by('-messages__timestamp').distinct()   
     serializer = ChatRoomSerializer(chats, many=True,context={'request': request})
     return Response(serializer.data)
 
