@@ -1925,27 +1925,29 @@ class FavoriteViewSet(viewsets.ModelViewSet):
            
         except ContentType.DoesNotExist:
             return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
-
+        if Dislike.objects.filter(user=request.user, content_type=content_type, object_id=object_id).exists():
+            return Response({'success': False, 'message': 'Avval dislike bosilgan'}, status=400)
         favorite, created = Favorite.objects.get_or_create(
             user=request.user,
             content_type=content_type,
             object_id=object_id
         )
-
+        
         if not created:
+            favorite.delete()
             return Response({
                 'success': False,
-                'message': "hatolik: Bu mahsulot allaqachon sevimlilarga qo'shilgan."
+                'message': "like o'chirildi:"
             })
 
         return Response({'success': True, 'message': 'Sevimlilarga qo‘shildi'})
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
+        # instance = self.get_object()
+        # self.perform_destroy(instance)
         return Response({
-            'success': True,
-            'message': 'Favorite item removed successfully.'
+            # 'success': True,
+            'message': ''
         })
 
 
@@ -1982,7 +1984,10 @@ class DislikeViewSet(viewsets.ModelViewSet):
            
         except ContentType.DoesNotExist:
             return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
-
+        
+        if Favorite.objects.filter(user=request.user, content_type=content_type, object_id=object_id).exists():
+            return Response({'success': False, 'message': 'Avval like bosilgan'}, status=400)
+        
         favorite, created = Dislike.objects.get_or_create(
             user=request.user,
             content_type=content_type,
@@ -1990,19 +1995,20 @@ class DislikeViewSet(viewsets.ModelViewSet):
         )
 
         if not created:
+            favorite.delete()
             return Response({
                 'success': False,
-                'message': "hatolik: Bu mahsulot allaqachon Dislike qo'shilgan."
+                'message': "dislike o'chirildi:"
             })
 
         return Response({'success': True, 'message': 'Dislike qo‘shildi'})
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
+        # instance = self.get_object()
+        # self.perform_destroy(instance)
         return Response({
-            'success': True,
-            'message': 'Dislike item removed successfully.'
+            # 'success': True,
+            'message': ''
         })
 
 
