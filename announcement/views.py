@@ -137,7 +137,9 @@ def get_district(request, pk):
 def get_brand(request):
     type = request.query_params.get('type')
     if type is None:
-        return Response({"error": "Type parameter is required."}, status=400)
+        carbrand = Brand.objects.all()
+        serializer = BrandSerializer(carbrand, many=True )
+        return Response(serializer.data)
     carbrand = Brand.objects.filter(type=type)
     serializer = BrandSerializer(carbrand, many=True )
     return Response(serializer.data)
