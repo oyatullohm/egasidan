@@ -38,6 +38,7 @@ urlpatterns = [
     path('get-hoursehold-type/', get_hoursehold_type),
     path('get-sport-type/', get_sport_type),
     path('get-animal-type/', get_animal_type),
+
     
     path('get-brand/', get_brand),
     path('get-model/<int:pk>/', get_model),

@@ -191,4 +191,4 @@ def get_sport_type(request):
 
 @api_view(['GET'])
 def get_animal_type(request):
-    return Response([{"name":i[0], 'value':i[1]} for i in Pet.ANIMAL_TYPES])
+    return Response([{"name":i[0], 'value':i[1]} for i in Pet.ANIMAL_TYPE])
