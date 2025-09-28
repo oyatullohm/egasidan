@@ -187,7 +187,7 @@ def get_hoursehold_type(request):
 
 @api_view(['GET'])
 def get_sport_type(request):
-    return Response([{"name":i[0], 'value':i[1]} for i in SportingGoods.SPORTING_GOODS_TYPES])
+    return Response([{"name":i[0], 'value':i[1]} for i in SportingGoods.SPORT_TYPE])
 
 @api_view(['GET'])
 def get_animal_type(request):
