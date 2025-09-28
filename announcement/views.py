@@ -136,13 +136,14 @@ def get_district(request, pk):
 @api_view(['GET'])
 def get_brand(request):
     type = request.query_params.get('type')
-    if type is None:
-        carbrand = Brand.objects.all()
+    if type:
+        carbrand = Brand.objects.filter(type=type)
         serializer = BrandSerializer(carbrand, many=True )
         return Response(serializer.data)
-    carbrand = Brand.objects.filter(type=type)
+    carbrand = Brand.objects.all()
     serializer = BrandSerializer(carbrand, many=True )
     return Response(serializer.data)
+    
 
 
 @api_view(['GET'])
