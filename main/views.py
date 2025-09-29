@@ -255,3 +255,37 @@ def message_list(request, message_id):
     messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('timestamp')
     serializer = MessageSerializer(messages, many=True)
     return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def message_delete(request, pk):
+    user = request.user
+    try:
+        message = Message.objects.get(id=pk)
+    except Message.DoesNotExist:
+        return Response({'error': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if message.sender != user:
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+    message.delete()
+    return Response({'success': 'Message deleted'}, status=status.HTTP_200_OK)
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def chat_delete(request, pk):
+    user = request.user
+    try:
+        chat_room = ChatRoom.objects.get(id=pk)
+    except ChatRoom.DoesNotExist:
+        return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if chat_room.owner != user:
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    message = Message.objects.filter(room=chat_room)
+    if message:
+        message.delete()
+    chat_room.delete()
+    return Response({'success': 'Chat room deleted'}, status=status.HTTP_200_OK)
+

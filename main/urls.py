@@ -30,5 +30,7 @@ urlpatterns = [
     path('chat/chat-list/',chat_list, name='chat_list'),
     path('chat/message-create/<int:message_id>/',message_create, name='message_create'),
     path('chat/message-list/<int:message_id>/',message_list, name='message_list'),
+    path('chat/message-delete/<int:pk>/',message_delete, name='message_delete'),
+    path('chat/chat-delete/<int:pk>/',chat_delete, name='chat_delete'),
     
 ]

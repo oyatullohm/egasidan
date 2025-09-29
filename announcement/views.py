@@ -32,7 +32,7 @@ def announcements_all(request):
 
     all_data = []
     for model, serializer in model_serializer_map:
-        queryset = model.objects.filter(**filters).order_by("-id")
+        queryset = model.objects.filter(**filters).select_related('category').order_by("-id")
         serialized = serializer(queryset, many=True).data
         if serialized:
             all_data += serialized
