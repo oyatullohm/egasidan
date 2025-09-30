@@ -24,7 +24,6 @@ urlpatterns = [
     path('get-user/',get_user, name='get_user'),
     path('password-update/', password_update, name='password_update'),
     path('user-update/',user_update, name='get_update'),
-    path('user-is-staff/<int:pk>/',user_is_staff, name='user_is_staff'),
     
     path('chat/chat-crete/',chat_create, name='chat_crete'),
     path('chat/chat-list/',chat_list, name='chat_list'),
@@ -32,5 +31,10 @@ urlpatterns = [
     path('chat/message-list/<int:message_id>/',message_list, name='message_list'),
     path('chat/message-delete/<int:pk>/',message_delete, name='message_delete'),
     path('chat/chat-delete/<int:pk>/',chat_delete, name='chat_delete'),
+    
+    path('user-all-user/',all_user, name='all_user'),
+    path('user-is-staff/<int:pk>/',user_is_staff, name='user_is_staff'),
+    path('user-is-active/<int:pk>/',user_is_active, name='user_is_active'),
+    path('user-detail/<int:pk>/',user_detail, name='user_is_detail'),
     
 ]

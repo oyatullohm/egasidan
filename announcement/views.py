@@ -7,6 +7,8 @@ from rest_framework.permissions import  AllowAny, IsAuthenticated
 from .decorators import IsStaff
 from rest_framework.pagination import PageNumberPagination
 
+
+
 @api_view(["GET"])
 def announcements_all(request):
     filters = {"is_active": True}

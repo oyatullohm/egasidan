@@ -15,7 +15,7 @@ class CustomRegisterSerializer(RegisterSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id','email','phone','first_name','last_name','is_staff']
+        fields = ['id','email','phone','first_name','last_name','is_staff','is_active']
     
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
