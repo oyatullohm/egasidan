@@ -65,6 +65,7 @@ class VehiclelistSerializer(serializers.ModelSerializer):
         return 'vehicle'
 
 class VehicleSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     vehicle_type = serializers.ChoiceField(choices=Vehicle.VEHICLE_TYPES)
     fuel_type = serializers.ChoiceField(choices=Vehicle.FUEL_TYPES)
     transmission = serializers.ChoiceField(choices=Vehicle.TRANSMISSION_TYPES)
@@ -82,10 +83,12 @@ class VehicleSerializer(serializers.ModelSerializer):
             'created_at','vehicle_type','brand','mileage',
             'engine_size','fuel_type','transmission','color','category',
             'district','model','image_urls','sold','content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked','madel_name'
             
         ]
         # depth = True1/
+    def get_madel_name(self, obj):
+        return 'vehicle'
     
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
@@ -142,6 +145,7 @@ class PropertylistSerializer(serializers.ModelSerializer):
         return 'property'
 
 class PropertySerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -155,9 +159,11 @@ class PropertySerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'property_type', 'category', 'district','image_urls',
             'views_count', 'sold',"area","rooms",'content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
-        depth = True
+        # depth = True
+    def get_madel_name(self, obj):
+        return 'property'
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
@@ -216,6 +222,7 @@ class ElectronicslistSerializer(serializers.ModelSerializer):
         
 
 class ElectronicsSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     dislikes_count = serializers.SerializerMethodField()
@@ -230,8 +237,11 @@ class ElectronicsSerializer(serializers.ModelSerializer):
             'category', 'district','image_urls',
             'views_count', 'sold','electronic_type','brand','model',
             'warranty','warranty_months', 'content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
+    def get_madel_name(self, obj):
+        return 'electronic'
+    
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
     def get_likes_count(self, obj):
@@ -288,6 +298,7 @@ class JoblistSerializer(serializers.ModelSerializer):
         return 'job'
 
 class JobSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     job_type= serializers.ChoiceField(choices=Job.JOB_TYPES)
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -302,8 +313,12 @@ class JobSerializer(serializers.ModelSerializer):
             'category', 'district','image_urls','telegram',
             'views_count', 'sold','job_type','company',
             'application_deadline','remote_work','content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
+        
+    def get_madel_name(self, obj):
+        return 'job'
+    
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
@@ -359,6 +374,7 @@ class ServicelistSerializer(serializers.ModelSerializer):
         return 'service'
 
 class ServiceSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     service_type= serializers.ChoiceField(choices=Service.SERVICE_TYPES)
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -373,8 +389,10 @@ class ServiceSerializer(serializers.ModelSerializer):
             'category', 'district','image_urls',
             'views_count', 'sold','service_type','experience_years',
             'availability','content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
+    def get_madel_name(self, obj):
+        return 'service'
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
@@ -432,6 +450,7 @@ class HouseholdItemslistSerializer(serializers.ModelSerializer):
         return 'hourse'
     
 class HouseholdItemsSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     hourse_type= serializers.ChoiceField(choices=HouseholdItems.HOUSEHOLD_TYPES)
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -447,9 +466,10 @@ class HouseholdItemsSerializer(serializers.ModelSerializer):
             'category', 'district','image_urls',
             'views_count', 'sold','hourse_type','model','experience_years',
             'content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
-        
+    def get_madel_name(self, obj):
+        return 'hourse'
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
     
@@ -506,6 +526,7 @@ class SportingGoodslistSerializer(serializers.ModelSerializer):
         return 'sport'
     
 class SportingGoodsSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     sport_type= serializers.ChoiceField(choices=SportingGoods.SPORT_TYPE)
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -520,8 +541,10 @@ class SportingGoodsSerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','sport_type','brand','model','content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
+    def get_madel_name(self, obj):
+        return 'sport'
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id
 
@@ -577,6 +600,7 @@ class PetlistSerializer(serializers.ModelSerializer):
     
 
 class PetSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     animal_type= serializers.ChoiceField(choices=Pet.ANIMAL_TYPE)
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -590,10 +614,12 @@ class PetSerializer(serializers.ModelSerializer):
             'produced','phone_number', 'is_active', 'created_at',
             'category', 'district','image_urls',
             'views_count', 'sold','animal_type','breed','age','content_type',
-            'likes_count','dislikes_count', 'is_liked', 'is_disliked'
+            'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
 
 
+    def get_madel_name(self, obj):
+        return 'pet'
     
     def get_content_type(self, obj):
         return ContentType.objects.get_for_model(obj).id

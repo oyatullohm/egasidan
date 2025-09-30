@@ -19,6 +19,25 @@ def announcements_all(request):
     region = request.query_params.get("region")
     if region:
         filters["district__region_id"] = region
+    
+    category = request.query_params.get('category')
+    if category:
+        filters['category__category'] = category
+    
+    sub_category = request.query_params.get('sub-category')
+    if sub_category:
+        filters['category'] = sub_category
+    
+    price = request.query_params.get('price')
+    if price:
+        try:
+            price = int(price)
+            filters['price__gte'] = price - 50000   # masalan 25 mingdan past 20 ming
+            filters['price__lte'] = price + 50000  # yuqoriga 30 ming
+        except : pass
+            
+
+    
     model_serializer_map = [
         (Vehicle, VehiclelistSerializer),
         (Property, PropertylistSerializer),
