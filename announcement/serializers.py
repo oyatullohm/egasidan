@@ -52,14 +52,17 @@ class ModellSerializer(serializers.ModelSerializer):
 
 class VehiclelistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()
     class Meta:
         model = Vehicle
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls', 'madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/vehicle/{obj.id}/"
 
+    def get_madel_name(self, obj):
+        return 'vehicle'
 
 class VehicleSerializer(serializers.ModelSerializer):
     vehicle_type = serializers.ChoiceField(choices=Vehicle.VEHICLE_TYPES)
@@ -126,14 +129,17 @@ class VehicleSerializer(serializers.ModelSerializer):
     
 
 class PropertylistSerializer(serializers.ModelSerializer):
+    madel_name = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
     class Meta:
         model = Property
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls', 'madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/property/{obj.id}/"
+    def get_madel_name(self, obj):
+        return 'property'
 
 class PropertySerializer(serializers.ModelSerializer):
     property_type= serializers.ChoiceField(choices=Property.PROPERTY_TYPES)
@@ -195,13 +201,18 @@ class PropertySerializer(serializers.ModelSerializer):
 
 class ElectronicslistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = Electronics
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls', 'madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/electronic/{obj.id}/"
+    
+    def get_madel_name(self, obj):
+        return 'electronic'
         
 
 class ElectronicsSerializer(serializers.ModelSerializer):
@@ -263,13 +274,18 @@ class ElectronicsSerializer(serializers.ModelSerializer):
     
 class JoblistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = Job
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls', 'madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/job/{obj.id}/"
+    
+    def get_madel_name(self, obj):
+        return 'job'
 
 class JobSerializer(serializers.ModelSerializer):
     job_type= serializers.ChoiceField(choices=Job.JOB_TYPES)
@@ -331,13 +347,16 @@ class JobSerializer(serializers.ModelSerializer):
     
 class ServicelistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()
     class Meta:
         model = Service
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls', 'madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/service/{obj.id}/"
+    def get_madel_name(self, obj):
+        return 'service'
 
 class ServiceSerializer(serializers.ModelSerializer):
     service_type= serializers.ChoiceField(choices=Service.SERVICE_TYPES)
@@ -399,14 +418,18 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 class HouseholdItemslistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()    
     class Meta:
         model = HouseholdItems
         fields = [
-            'id',"url",'description', 'price', 'old_price','condition','image_urls'
+            'id',"url",'description', 'price', 'old_price','condition','image_urls','madel_name'
             ]
     
     def get_url(self, obj):
         return f"/api/product/hourse/{obj.id}/"
+    
+    def get_madel_name(self, obj):
+        return 'hourse'
     
 class HouseholdItemsSerializer(serializers.ModelSerializer):
     hourse_type= serializers.ChoiceField(choices=HouseholdItems.HOUSEHOLD_TYPES)
@@ -470,13 +493,17 @@ class HouseholdItemsSerializer(serializers.ModelSerializer):
   
 class SportingGoodslistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()
     class Meta:
         model = SportingGoods
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls', 'madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/sport/{obj.id}/"
+    
+    def get_madel_name(self, obj):
+        return 'sport'
     
 class SportingGoodsSerializer(serializers.ModelSerializer):
     sport_type= serializers.ChoiceField(choices=SportingGoods.SPORT_TYPE)
@@ -537,13 +564,17 @@ class SportingGoodsSerializer(serializers.ModelSerializer):
 
 class PetlistSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
+    madel_name = serializers.SerializerMethodField()
     class Meta:
         model = Pet
         fields = [
-            'id','url','description', 'price', 'old_price','condition','image_urls'
+            'id','url','description', 'price', 'old_price','condition','image_urls','madel_name'
             ]
     def get_url(self, obj):
         return f"/api/product/pet/{obj.id}/"
+    def get_madel_name(self, obj):
+        return 'pet'
+    
 
 class PetSerializer(serializers.ModelSerializer):
     animal_type= serializers.ChoiceField(choices=Pet.ANIMAL_TYPE)
