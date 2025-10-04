@@ -2012,3 +2012,57 @@ class DislikeViewSet(viewsets.ModelViewSet):
         })
 
 
+class ComplaintViewSet(viewsets.ModelViewSet):
+    serializer_class =  ComplaintSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def list(self,request):
+        if request.user.is_staff:
+            complaint= Complaint.objects.filter(is_saw=False).order_by('id')
+            serializer = ComplaintSerializer(complaint, many=True)
+            return Response(serializers.data)
+        complaint= Complaint.objects.filter(user=request.user).order_by('-id')
+        serializer = ComplaintSerializer(complaint, many=True)
+        return Response(serializers.data)
+    
+    def retrieve(self, request, *args, **kwargs):
+        complaint= Complaint.objects.get(id=kwargs['pk'])
+        if request.user.is_staff or complaint.user.id == request.user.id:
+            serializers = (ComplaintSerializer(complaint, many= False))
+            return Response(serializers.data)
+        return Response({'success': False})
+    
+    def create(self, request, *args, **kwargs ):
+        data = request.data
+        user = request.user
+        content_type = data['content_type']
+        object_id = data['object_id']
+        text = data['text']
+        complaint, created = Complaint.objects.get_or_create(
+            user=request.user,
+            content_type=content_type,
+            object_id=object_id
+        )
+        complaint.text = text
+        complaint.save()
+        serializer = ComplaintSerializer(complaint, many= False)
+        return Response(serializer.data)
+    
+    @action(methods=['post'],detail=True)
+    def is_saw_(self, request, *args, **kwargs):
+        if request.user.is_staff:
+            complaint= Complaint.objects.get(id=kwargs['pk'])
+            complaint.is_saw = True
+            complaint.save()
+            return Response({
+                'success': True
+            })
+        return Response({
+                'success': False
+            })
+    
+        
+        
+        
+        
+        

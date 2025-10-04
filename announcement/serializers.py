@@ -708,3 +708,20 @@ class DislikeSerializer(serializers.ModelSerializer):
         if serializer_class:
             return serializer_class(product).data
         return None
+
+class ComplaintSerializer(serializers.ModelSerializer):
+    # content_type = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Complaint
+        fields = [ 'id','object_id',
+                  'created_at','product','user','is_saw'
+                  ]
+  
+    def get_product(self, obj):
+        product = obj.product
+        serializer_class = PRODUCT_SERIALIZERS.get(type(product))
+        if serializer_class:
+            return serializer_class(product).data
+        return None
