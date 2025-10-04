@@ -716,7 +716,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complaint
         fields = [ 'id','object_id',
-                  'created_at','product','user','is_saw'
+                  'created_at','text','product','user','is_saw'
                   ]
   
     def get_product(self, obj):
