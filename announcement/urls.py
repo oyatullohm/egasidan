@@ -22,6 +22,7 @@ router.register(r"hourse", HouseholdItemsViewSet, basename='hourse')
 router.register(r"pet", PetViewSet, basename='pet')
 router.register(r"like", FavoriteViewSet, basename='like')
 router.register(r"dislike", DislikeViewSet, basename='dislike')
+router.register(r"complaint", ComplaintViewSet, basename='complaint')
 
 urlpatterns = [
     path('get-category/', get_category),
