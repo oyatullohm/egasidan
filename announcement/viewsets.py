@@ -2038,8 +2038,13 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         content_type = data['content_type']
         object_id = data['object_id']
         text = data['text']
+        try:
+            content_type = ContentType.objects.get(id=content_type)
+           
+        except ContentType.DoesNotExist:
+            return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
         complaint, created = Complaint.objects.get_or_create(
-            user=request.user,
+            user=user,
             content_type=content_type,
             object_id=object_id
         )
