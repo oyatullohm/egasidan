@@ -2023,7 +2023,7 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             return Response(serializers.data)
         complaint= Complaint.objects.filter(user=request.user).order_by('-id')
         serializer = ComplaintSerializer(complaint, many=True)
-        return Response(serializers.data)
+        return Response(serializer.data)
     
     def retrieve(self, request, *args, **kwargs):
         complaint= Complaint.objects.get(id=kwargs['pk'])
