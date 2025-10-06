@@ -2065,6 +2065,18 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         return Response({
                 'success': False
             })
+    def destroy(self, request, *args, **kwargs):
+        complaint= Complaint.objects.get(id=kwargs['pk'])
+        if request.user.is_staff or complaint.user.id == request.user.id:
+            complaint.delete()
+            return Response({
+                'success': True,
+                'message': 'Complaint o‘chirildi'
+            })
+        return Response({
+            'success': False,
+            'message': 'Complaint o‘chirib bo‘lmaydi'
+        })
     
         
         
