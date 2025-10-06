@@ -2020,7 +2020,7 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         if request.user.is_staff:
             complaint= Complaint.objects.filter(is_saw=False).order_by('id')
             serializer = ComplaintSerializer(complaint, many=True)
-            return Response(serializers.data)
+            return Response(serializer.data)
         complaint= Complaint.objects.filter(user=request.user).order_by('-id')
         serializer = ComplaintSerializer(complaint, many=True)
         return Response(serializer.data)
