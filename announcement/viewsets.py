@@ -1933,7 +1933,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
             object_id=object_id
         )
         
-        if not created:
+        if created == False:
             favorite.delete()
             return Response({
                 'success': False,
@@ -1994,7 +1994,7 @@ class DislikeViewSet(viewsets.ModelViewSet):
             object_id=object_id
         )
 
-        if not created:
+        if created == False:
             favorite.delete()
             return Response({
                 'success': False,
