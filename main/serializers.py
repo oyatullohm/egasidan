@@ -26,7 +26,9 @@ class MessageSerializer(serializers.ModelSerializer):
     
     def get_i(self, obj):
         request = self.context.get('request')
-        return obj.sender.id == request.user.id
+        if request and hasattr(request, 'user'):
+            return obj.sender.id == request.user.id
+        return False
     
 class ChatRoomSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()

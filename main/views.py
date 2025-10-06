@@ -186,6 +186,8 @@ def chat_create(request):
 @permission_classes([IsAuthenticated])
 def chat_list(request):
     user = request.user
+    if not user.is_authenticated:
+        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
     chats = (
         ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user))
         .annotate(last_message=Max("messages__timestamp"))  # eng so‘nggi xabar
