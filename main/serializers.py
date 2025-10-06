@@ -18,11 +18,16 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id','email','phone','first_name','last_name','is_staff','is_active']
     
 class MessageSerializer(serializers.ModelSerializer):
+    i = serializers.SerializerMethodField()
     sender = UserSerializer(read_only=True)
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'room', 'image', 'content', 'timestamp', ]
-        
+        fields = ['id', 'i', 'sender', 'room', 'image', 'content', 'timestamp', ]
+    
+    def get_i(self, obj):
+        request = self.context.get('request')
+        return obj.sender.id == request.user.id
+    
 class ChatRoomSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()

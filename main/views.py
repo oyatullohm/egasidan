@@ -220,7 +220,7 @@ def message_create(request, message_id):
         message.image = image
     message.save()
 
-    serializer = MessageSerializer(message)
+    serializer = MessageSerializer(message, context={'request': request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
@@ -236,7 +236,7 @@ def message_list(request, message_id):
         return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
     messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('timestamp')
-    serializer = MessageSerializer(messages, many=True)
+    serializer = MessageSerializer(messages, many=True,context={'request': request})
     return Response(serializer.data)
 
 
