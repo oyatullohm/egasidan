@@ -35,12 +35,14 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     last_message = serializers.SerializerMethodField()
     class Meta:
         model = ChatRoom
-        fields = ['id','user', 'user_1','owner','last_message', 'user_2', 'room_name', 'created_at']
+        fields = ['id','user', 'user_1','user_2','owner','last_message', 'user_2', 'room_name', 'created_at']
     
     def get_user(self, obj):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            return UserSerializer(request.user).data
+            if request.user.id != obj.user_1.id:
+                return UserSerializer(obj.user_1).data
+            return UserSerializer(obj.user_2).data
         return None
     
     def get_last_message(self,obj):

@@ -89,7 +89,7 @@ class ChatRoom(models.Model):
         return f"Chat between {self.user_1} and {self.user_2}"
 
 
-class   Message(models.Model):
+class Message(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_messages"
