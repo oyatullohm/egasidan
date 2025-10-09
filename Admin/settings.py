@@ -8,6 +8,7 @@ env = environ.Env()
 environ.Env.read_env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env.str('SECRET_KEY')
+FIREBASE_SERVER_KEY = env.str('FIREBASE_SERVER_KEY')
 # FCM_SERVER_KEY = env.str('FCM_SERVER_KEY')
 DEBUG = True
 
@@ -17,7 +18,6 @@ ALLOWED_HOSTS = ['*']
 # settings.py
 
 AUTH_USER_MODEL = 'main.CustomUser'
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

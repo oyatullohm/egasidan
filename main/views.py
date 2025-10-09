@@ -197,6 +197,11 @@ def chat_list(request):
     serializer = ChatRoomSerializer(chats, many=True,context={'request': request})
     return Response(serializer.data)
 
+# views.py
+from django.db import transaction
+from .fcm_service import FCMService
+from .models import FCMToken
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def message_create(request, message_id):
@@ -212,18 +217,86 @@ def message_create(request, message_id):
     content = request.data.get('content', '')
     image = request.FILES.get('image', None)
 
-    message = Message.objects.create(
-        sender = request.user,
-        room=chat_room,
-    )
-    if content:
-        message.content = content
-    if image:
-        message.image = image
-    message.save()
+    with transaction.atomic():
+        message = Message.objects.create(
+            sender=request.user,
+            room=chat_room,
+        )
+        if content:
+            message.content = content
+        if image:
+            message.image = image
+        message.save()
+
+        # Push notification yuborish
+        send_message_notification(message)
 
     serializer = MessageSerializer(message, context={'request': request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+def send_message_notification(message):
+    """Xabar yuborilganda push notification yuborish"""
+    sender = message.sender
+    chat_room = message.room
+    
+    # Kimga notification yuborilishi kerak
+    if sender == chat_room.user_1:
+        receiver = chat_room.user_2
+    else:
+        receiver = chat_room.user_1
+    
+    # Qabul qiluvchining FCM token larini olish
+    try:
+        fcm_tokens = FCMToken.objects.filter(user=receiver)
+        
+        notification_title = f"Yangi xabar {sender.username} dan"
+        notification_body = message.content[:100] + "..." if len(message.content) > 100 else message.content
+        
+        # Agar content bo'sh bo'lsa va rasm bo'lsa
+        if not message.content and message.image:
+            notification_body = "📷 Rasm"
+        
+        data = {
+            'chat_room_id': str(chat_room.id),
+            'message_id': str(message.id),
+            'sender_id': str(sender.id),
+            'type': 'new_message'
+        }
+        
+        # Har bir token ga notification yuborish
+        for fcm_token in fcm_tokens:
+            FCMService.send_push_notification(
+                fcm_token.token,
+                notification_title,
+                notification_body,
+                data
+            )
+            
+    except FCMToken.DoesNotExist:
+        # FCM token topilmadi
+        pass
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_fcm_token(request):
+    token = request.data.get('token')
+    if not token:
+        return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Eski token larni o'chirish (optional)
+    FCMToken.objects.filter(user=request.user).delete()
+    
+    # Yangi token ni saqlash
+    fcm_token, created = FCMToken.objects.get_or_create(
+        user=request.user,
+        token=token
+    )
+    
+    return Response({
+        'status': 'success',
+        'created': created
+    }, status=status.HTTP_201_CREATED)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
