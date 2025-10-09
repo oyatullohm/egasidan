@@ -325,26 +325,26 @@ def user_detail(request,pk):
     return Response({'permission':None})
     
 
-push_service = FCMNotification(api_key=settings.FCM_SERVER_KEY)
+# push_service = FCMNotification(api_key=settings.FCM_SERVER_KEY)
 
-class RegisterDevice(APIView):
-    permission_classes = [IsAuthenticated]
+# class RegisterDevice(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        token = request.data.get('token')
-        DeviceToken.objects.update_or_create(user=request.user, defaults={'token': token})
-        return Response({"message": "Token saqlandi"})
+#     def post(self, request):
+#         token = request.data.get('token')
+#         DeviceToken.objects.update_or_create(user=request.user, defaults={'token': token})
+#         return Response({"message": "Token saqlandi"})
 
-class SendNotification(APIView):
-    def post(self, request):
-        title = request.data.get('title')
-        body = request.data.get('body')
-        tokens = list(DeviceToken.objects.values_list('token', flat=True))
-        result = push_service.notify_multiple_devices(
-            registration_ids=tokens,
-            message_title=title,
-            message_body=body
-        )
-        return Response(result)               
+# class SendNotification(APIView):
+#     def post(self, request):
+#         title = request.data.get('title')
+#         body = request.data.get('body')
+#         tokens = list(DeviceToken.objects.values_list('token', flat=True))
+#         result = push_service.notify_multiple_devices(
+#             registration_ids=tokens,
+#             message_title=title,
+#             message_body=body
+#         )
+#         return Response(result)               
         
     

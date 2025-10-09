@@ -51,7 +51,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             return MessageSerializer(message).data
         return None
     
-class DeviceTokenSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DeviceToken
-        fields = ['token']
+# class DeviceTokenSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = DeviceToken
+#         fields = ['token']
