@@ -8,6 +8,7 @@ env = environ.Env()
 environ.Env.read_env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env.str('SECRET_KEY')
+FCM_SERVER_KEY = env.str('FCM_SERVER_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']

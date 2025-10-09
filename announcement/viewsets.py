@@ -2018,7 +2018,7 @@ class ComplaintViewSet(viewsets.ModelViewSet):
     
     def list(self,request):
         if request.user.is_staff:
-            complaint= Complaint.objects.filter(is_saw=False).order_by('id')
+            complaint= Complaint.objects.filter(is_saw=False).order_by('-id')
             serializer = ComplaintSerializer(complaint, many=True)
             return Response(serializer.data)
         complaint= Complaint.objects.filter(user=request.user).order_by('-id')
@@ -2052,6 +2052,14 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         complaint.save()
         serializer = ComplaintSerializer(complaint, many= False)
         return Response(serializer.data)
+    
+    @action(methods=['get'],detail=False)
+    def is_saw_true(self, request, *args, **kwargs):
+        if request.user.is_staff:
+            complaint= Complaint.objects.filter(is_saw=True).order_by('-id')
+            serializer = ComplaintSerializer(complaint, many=True)
+            return Response(serializer.data)
+        return Response({'success': False})
     
     @action(methods=['post'],detail=True)
     def is_saw_(self, request, *args, **kwargs):

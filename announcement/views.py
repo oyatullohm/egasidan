@@ -9,9 +9,86 @@ from rest_framework.pagination import PageNumberPagination
 
 
 
+@api_view(["POST"])
+def is_active_true_false(request):
+    if not request.user.is_staff:
+        return Response({'success': False,}, status=403)
+    try:
+        obj_id = request.data['id']
+        content_type_id = request.data['content_type']
+        content_type = ContentType.objects.get(id=content_type_id) 
+        model_class = content_type.model_class()
+        obj = model_class.objects.get(id=obj_id)
+        obj.is_active = not obj.is_active
+        obj.save()
+        return Response({"success": True})
+    
+    except Exception as e:
+        return Response({
+            "success": False,
+            "error": str(e)
+        }, status=400)
+
+
 @api_view(["GET"])
 def announcements_all(request):
     filters = {"is_active": True}
+
+    # query_params tekshirish
+    district = request.query_params.get("district")
+    if district:
+        filters["district_id"] = district
+
+    region = request.query_params.get("region")
+    if region:
+        filters["district__region_id"] = region
+    
+    category = request.query_params.get('category')
+    if category:
+        filters['category__category'] = category
+    
+    sub_category = request.query_params.get('sub-category')
+    if sub_category:
+        filters['category'] = sub_category
+    
+    price = request.query_params.get('price')
+    if price:
+        try:
+            price = int(price)
+            filters['price__gte'] = price - 50000   # masalan 25 mingdan past 20 ming
+            filters['price__lte'] = price + 50000  # yuqoriga 30 ming
+        except : pass
+            
+
+    
+    model_serializer_map = [
+        (Vehicle, VehiclelistSerializer),
+        (Property, PropertylistSerializer),
+        (Electronics, ElectronicslistSerializer),
+        (Job, JoblistSerializer),
+        (Service, ServicelistSerializer),
+        (HouseholdItems, HouseholdItemslistSerializer),
+        (SportingGoods, SportingGoodslistSerializer),
+        (Pet, PetlistSerializer),
+    ]
+
+    all_data = []
+    for model, serializer in model_serializer_map:
+        queryset = model.objects.filter(**filters).select_related('category').order_by("-id")
+        serialized = serializer(queryset, many=True).data
+        if serialized:
+            all_data += serialized
+
+    # Paginatsiya
+    paginator = PageNumberPagination()
+    paginator.page_size = 5 # har bir sahifada 20 tadan
+    result_page = paginator.paginate_queryset(all_data, request)
+
+    return paginator.get_paginated_response(result_page)
+
+@api_view(["GET"])
+def announcements_all_false(request):
+    filters = {"is_active": False}
 
     # query_params tekshirish
     district = request.query_params.get("district")
