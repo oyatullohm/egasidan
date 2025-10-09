@@ -46,6 +46,7 @@ urlpatterns = [
     path('get-brand-type/', get_brand_type),
     path('is-active-true-false/', is_acttive_true_false),
     path('announcements-all/', announcements_all),
+    path('announcements-all-false/', announcements_all_false),
     path('announcements-user/', announcements_user),
     # path('get-sold/', get_sold),
     

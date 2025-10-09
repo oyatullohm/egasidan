@@ -9,27 +9,6 @@ from rest_framework.pagination import PageNumberPagination
 
 
 
-@api_view(["POST"])
-def is_active_true_false(request):
-    if not request.user.is_staff:
-        return Response({'success': False,}, status=403)
-    try:
-        obj_id = request.data['id']
-        content_type_id = request.data['content_type']
-        content_type = ContentType.objects.get(id=content_type_id) 
-        model_class = content_type.model_class()
-        obj = model_class.objects.get(id=obj_id)
-        obj.is_active = not obj.is_active
-        obj.save()
-        return Response({"success": True})
-    
-    except Exception as e:
-        return Response({
-            "success": False,
-            "error": str(e)
-        }, status=400)
-
-
 @api_view(["GET"])
 def announcements_all(request):
     filters = {"is_active": True}
@@ -186,14 +165,14 @@ def announcements_user(request):
 def is_acttive_true_false(request):
     try:
         obj_id = request.data['id']
-        is_active = request.data.get("is_active") 
         content_type_id = request.data['content_type']
         content_type = ContentType.objects.get(id=content_type_id) 
         model_class = content_type.model_class()
         obj = model_class.objects.get(id=obj_id)
-        obj.is_active = bool(int(is_active))
+        obj.is_active = not obj.is_active
         obj.save()
-        return Response({"success": True})
+        return Response({"success": True
+                         ,"is_active": obj.is_active})
     
     except Exception as e:
         return Response({
