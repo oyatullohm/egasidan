@@ -680,7 +680,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = [  'id','object_id',
+        fields = [  'id','object_id','content_type',
                   'created_at','product'
                   ]
   
@@ -698,7 +698,7 @@ class DislikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Dislike
-        fields = [  'id','object_id',
+        fields = [  'id','object_id','content_type',
                   'created_at','product'
                   ]
   
