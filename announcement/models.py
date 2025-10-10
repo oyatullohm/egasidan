@@ -1,10 +1,7 @@
 from django.db import models
-from django.core.validators import RegexValidator
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from .utils import unique_slug
-
 
 User = get_user_model()
 

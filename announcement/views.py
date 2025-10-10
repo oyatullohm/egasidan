@@ -7,8 +7,40 @@ from rest_framework.permissions import  AllowAny, IsAuthenticated
 from .decorators import IsStaff
 from rest_framework.pagination import PageNumberPagination
 
+@api_view(["GET"])
+@permission_classes([IsStaff])
+def announcements_all_statistic(request):
+    model_list = [
+        Vehicle,
+        Property,
+        Electronics,
+        Job,
+        Service,
+        HouseholdItems,
+        SportingGoods,
+        Pet]
 
-
+    all_count = 0
+    active_count = 0
+    inactive_count = 0
+    for model in model_list:
+        queryset = model.objects.all().select_related('category')
+        all_count += queryset.count()
+        active_count += queryset.filter(is_active=True).count()
+        inactive_count += queryset.filter(is_active=False).count()
+    
+    user = User.objects.count()
+    complaint = Complaint.objects.count()
+    
+    return Response({
+        "all_count": all_count,
+        "active_count": active_count,
+        "inactive_count": inactive_count,
+        "user_count": user,
+        "complaint_count": complaint
+        
+    })
+    
 @api_view(["GET"])
 def announcements_all(request):
     filters = {"is_active": True}
