@@ -14,9 +14,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# settings.py
-# settings.py
-
 AUTH_USER_MODEL = 'main.CustomUser'
 INSTALLED_APPS = [
     'django.contrib.admin',
