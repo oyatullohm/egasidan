@@ -1240,7 +1240,7 @@ class ServiceViewSrt(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        service = self.get_object()
+        service = Service.objects.get(id=pk)
         if request.user.id != service.user.id:
             return Response({
                 'success':False,
