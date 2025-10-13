@@ -1215,7 +1215,7 @@ class ServiceViewSrt(viewsets.ModelViewSet):
             service.image.add(img)
             return Response({
                 'success': True,
-                'data': JobSerializer(service, many = False).data
+                'data': ServiceSerializer(service, many = False).data
             })
         return Response({
             'success': False,
