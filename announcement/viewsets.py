@@ -1197,7 +1197,7 @@ class ServiceViewSrt(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def add_img(self, request, pk=None):
         service = self.get_object()
-        if request.user.id != job.user.id:
+        if request.user.id != service.user.id:
             return Response({
                 'success':False,
                 'permissions':False
