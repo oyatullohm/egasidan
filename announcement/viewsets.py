@@ -419,7 +419,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        vehicle = self.get_object()
+        vehicle = Vehicle.objects.get(id=pk)
         if request.user.id != vehicle.user.id:
             return Response({
                 'success':False,
@@ -628,7 +628,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        property = self.get_object()
+        property = Property.objects.get(id=pk)
         if request.user.id != property.user.id:
             return Response({
                 'success':False,
@@ -943,7 +943,7 @@ class ElectronicsViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        electronics = self.get_object()
+        electronics = Electronics.objects.get(id=pk)
         if request.user.id != electronics.user.id:
             return Response({
                 'success':False,
@@ -1131,7 +1131,7 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        job = self.get_object()
+        job = Job.objects.get(id=pk)
         if request.user.id != job.user.id:
             return Response({
                 'success':False,
@@ -1522,7 +1522,7 @@ class HouseholdItemsViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        household_item = self.get_object()
+        household_item = HouseholdItems.objects.get(id=pk)
         if request.user.id != household_item.user.id:
             return Response({
                 'success':False,
@@ -1715,7 +1715,7 @@ class SportingGoodsViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        sporting_goods = self.get_object()
+        sporting_goods = SportingGoods.objects.get(id=pk)
         if request.user.id != sporting_goods.user.id:
             return Response({
                 'success':False,
@@ -1905,7 +1905,7 @@ class PetViewSet(viewsets.ModelViewSet):
     
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def sold(self, request, pk=None):
-        pet = self.get_object()
+        pet = Pet.objects.get(id=pk)
         if request.user.id != pet.user.id:
             return Response({
                 'success':False,
