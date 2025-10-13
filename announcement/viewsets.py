@@ -425,8 +425,12 @@ class VehicleViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        vehicle.sold = 'sold'
-        vehicle.is_active = False
+        if vehicle.sold == 'sold':
+            vehicle.sold = 'not_sold'
+            vehicle.is_active = True
+        else:
+            vehicle.sold = 'sold'
+            vehicle.is_active = False
         vehicle.save()
         return Response({
             'success': True,
@@ -630,8 +634,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        property.sold = 'sold'
-        property.is_active = False
+        if property.sold == 'sold':
+            property.sold = 'not_sold'
+            property.is_active = True
+        else:
+            property.sold = 'sold'
+            property.is_active = False
         property.save()
         return Response({
             'success': True,
@@ -941,8 +949,12 @@ class ElectronicsViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        electronics.sold = 'sold'
-        electronics.is_active = False
+        if electronics.sold == 'sold':
+            electronics.sold  = 'not_sold'
+            electronics.is_active = True
+        else:
+            electronics.sold  = 'sold'
+            electronics.is_active = False
         electronics.save()
         return Response({
             'success': True,
@@ -1125,8 +1137,12 @@ class JobViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        job.sold = 'sold'
-        job.is_active = False
+        if job.sold == 'sold':
+            job.sold = 'not_sold'
+            job.is_active = True
+        else:
+            job.sold = 'sold'
+            job.is_active = False
         job.save()
         return Response({
             'success': True,
@@ -1230,8 +1246,12 @@ class ServiceViewSrt(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        service.sold = 'sold'
-        service.is_active = False
+        if service.sold == 'sold':
+            service.sold = 'not_sold'
+            service.is_active = True
+        else:
+            service.sold = 'sold'
+            service.is_active = False
         service.save()
         return Response({
             'success': True,
@@ -1508,8 +1528,12 @@ class HouseholdItemsViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        household_item.sold = 'sold'
-        household_item.is_active = False
+        if household_item.sold == 'sold':
+            household_item.sold = 'not_sold'
+            household_item.is_active = True
+        else:
+            household_item.sold = 'sold'
+            household_item.is_active = False
         household_item.save()
         return Response({
             'success': True,
@@ -1697,8 +1721,12 @@ class SportingGoodsViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        sporting_goods.sold = 'sold'
-        sporting_goods.is_active = False
+        if sporting_goods.sold == 'sold':
+            sporting_goods.sold = 'not_sold'
+            sporting_goods.is_active = True
+        else:
+            sporting_goods.sold = 'sold'
+            sporting_goods.is_active = False
         sporting_goods.save()
         return Response({
             'success': True,
@@ -1883,8 +1911,12 @@ class PetViewSet(viewsets.ModelViewSet):
                 'success':False,
                 'permissions':False
             })
-        pet.sold = 'sold'
-        pet.is_active = False
+        if pet.sold == 'sold':
+            pet.sold = 'not_sold'
+            pet.is_active = True
+        else:
+            pet.sold = 'sold'
+            pet.is_active = False
         pet.save()
         return Response({
             'success': True,
