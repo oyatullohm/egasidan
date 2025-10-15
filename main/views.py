@@ -249,7 +249,7 @@ def send_message_notification(message):
     try:
         fcm_tokens = FCMToken.objects.filter(user=receiver)
         
-        notification_title = f"Yangi xabar {sender.username} dan"
+        notification_title = f"Yangi xabar {sender} dan"
         notification_body = message.content[:100] + "..." if len(message.content) > 100 else message.content
         
         # Agar content bo'sh bo'lsa va rasm bo'lsa
