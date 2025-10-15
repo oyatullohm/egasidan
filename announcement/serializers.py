@@ -66,6 +66,7 @@ class VehiclelistSerializer(serializers.ModelSerializer):
 
 class VehicleSerializer(serializers.ModelSerializer):
     madel_name = serializers.SerializerMethodField()
+    model = serializers.SerializerMethodField()
     vehicle_type = serializers.ChoiceField(choices=Vehicle.VEHICLE_TYPES)
     fuel_type = serializers.ChoiceField(choices=Vehicle.FUEL_TYPES)
     transmission = serializers.ChoiceField(choices=Vehicle.TRANSMISSION_TYPES)
@@ -87,6 +88,9 @@ class VehicleSerializer(serializers.ModelSerializer):
             
         ]
         # depth = True1/
+    def get_model(self, obj):
+        return f"{obj.model.name}"
+    
     def get_madel_name(self, obj):
         return 'vehicle'
     
@@ -222,6 +226,7 @@ class ElectronicslistSerializer(serializers.ModelSerializer):
         
 class ElectronicsSerializer(serializers.ModelSerializer):
     madel_name = serializers.SerializerMethodField()
+    model = serializers.SerializerMethodField()
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     dislikes_count = serializers.SerializerMethodField()
@@ -238,6 +243,8 @@ class ElectronicsSerializer(serializers.ModelSerializer):
             'warranty','warranty_months', 'content_type',
             'likes_count','dislikes_count', 'is_liked', 'is_disliked', 'madel_name'
         ]
+    def get_model(self, obj):
+        return f"{obj.model.name}"
     def get_madel_name(self, obj):
         return 'electronic'
     
