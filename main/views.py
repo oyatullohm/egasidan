@@ -229,7 +229,7 @@ def message_create(request, message_id):
         message.save()
 
         # Push notification yuborish
-        send_message_notification(message)
+        # send_message_notification(message)
 
     serializer = MessageSerializer(message, context={'request': request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)
