@@ -105,8 +105,10 @@ class Message(models.Model):
 
 class FCMToken(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    token = models.TextField(unique=True)
+    token = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = ('user', 'token')
     
     def __str__(self):
         return f"FCM Token for {self.user}"

@@ -11,6 +11,7 @@
     .msg { margin: 5px; padding: 8px; border-radius: 8px; }
     .me { background-color: #d1ffd1; text-align: right; }
     .other { background-color: #eaeaea; text-align: left; }
+    button { margin-top: 10px; padding: 6px 12px; }
   </style>
 </head>
 <body>
@@ -30,13 +31,16 @@
     <button type="submit">Yuborish</button>
   </form>
 
+  <button id="enable-notifications">🔔 Bildirishnomani yoqish</button>
+
   <script>
     const roomId = "{{ chat_room.id }}";
 
+    // 📨 Xabar yuborish formasi
     document.getElementById("msgForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const formData = new FormData(this);
-      
+
       const response = await fetch(`/chat/${roomId}/send/`, {
         method: "POST",
         body: formData,
@@ -56,50 +60,89 @@
         alert("Xatolik: " + data.error);
       }
     });
-  </script>
 
-  <script>
-    // 🔥 Firebase sozlamalari
-    const firebaseConfig = {
+  const firebaseConfig = {
+    apiKey: "{{ FIREBASE_CONFIG.apiKey }}",
+    authDomain: "{{ FIREBASE_CONFIG.authDomain }}",
+    projectId: "{{ FIREBASE_CONFIG.projectId }}",
+    storageBucket: "{{ FIREBASE_CONFIG.storageBucket }}",
+    messagingSenderId: "{{ FIREBASE_CONFIG.messagingSenderId }}",
+    appId: "{{ FIREBASE_CONFIG.appId }}"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
 
-        apiKey: "AIzaSyBTWh23G8dOx_dE6rXFjH-6OCArLwIPcDg",
+  // Public VAPID key - Firebase Console dan oling va trim qiling
+   const VAPID_KEY = "{{ FIREBASE_VAPID_KEY }}";
+  // Tugma bosilganda ishlaydigan funksiya
+  async function enableNotifications() {
+    try {
+      if (!('serviceWorker' in navigator)) throw new Error('Service Worker qo`llab-quvvatlanmaydi');
 
-        authDomain: "egasidan-35edc.firebaseapp.com",
+      // 1) ro'yxatdan o'tkaz (root scope uchun path /firebase-messaging-sw.js)
+      console.log('🔁 Registering service worker...');
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {scope: '/'});
+      console.log('✅ register() returned:', registration);
 
-        projectId: "egasidan-35edc",
+      // 2) ro'yxatlash tugaguncha yoki active bo'lguncha kutish
+      const readyReg = await navigator.serviceWorker.ready;
+      console.log('✅ navigator.serviceWorker.ready:', readyReg);
 
-        storageBucket: "egasidan-35edc.firebasestorage.app",
+      // 3) messaging bilan service workerni bog'lash (v8)
+      try {
+        messaging.useServiceWorker(readyReg);
+      } catch (e) {
+        // ba'zan v8 da useServiceWorker ishlamasligi mumkin, ammo readyReg ni getToken ga beramiz
+        console.warn('useServiceWorker warning:', e);
+      }
 
-        messagingSenderId: "1044507351309",
+      // 4) ruxsatni so'rash — ESDA: buni user gesture ichida chaqirish kerak
+      const permission = await Notification.requestPermission();
+      console.log('Notification permission:', permission);
+      if (permission !== 'granted') {
+        console.warn('❌ Permission not granted');
+        return;
+      }
 
-        appId: "1:1044507351309:web:2bd1282ff17114fc9f3844"
+      // 5) token olish — vapidKey va service worker registration bilan
+      let token;
+      try {
+        token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: readyReg });
+      } catch (err) {
+        console.error('❌ getToken() failed:', err);
+        throw err;
+      }
 
-        };
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+      if (!token) {
+        console.warn('⚠️ getToken returned null/undefined');
+        return;
+      }
 
-    // 🔔 Brauzerdan ruxsat olish
-    messaging.requestPermission()
-      .then(() => messaging.getToken())
-      .then(token => {
-        console.log("📱 Token:", token);
-        // Bu tokenni backendga yuborish (agar kerak bo‘lsa)
-        fetch("/save-token/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}"
-          },
-          body: JSON.stringify({ token })
-        });
-      })
-      .catch(err => console.error("Permission berilmadi:", err));
+      console.log('📱 FCM token:', token);
 
-    // 🔔 Notification qabul qilish
-    messaging.onMessage(payload => {
-      console.log("🔔 Yangi push:", payload);
-      alert("📩 Yangi xabar: " + payload.notification.body);
-    });
+      // 6) tokenni backendga yuborish
+      fetch('/api/save-fcm-token/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ token })
+      }).then(r => r.json()).then(d => console.log('save-token:', d)).catch(e => console.error(e));
+
+    } catch (err) {
+      console.error('❌ Error retrieving push subscription (outer):', err);
+      // Agar kerak bo'lsa, xatolikni foydalanuvchiga ko'rsatish
+      alert('Push subscription xatosi: ' + (err.message || err));
+    }
+  }
+
+  // Tugmaga qo'shing (sizda mavjud tugma)
+  document.getElementById('enable-notifications').addEventListener('click', enableNotifications);
+
+  // Foreground xabar qabul qilish
+  messaging.onMessage(payload => {
+    console.log('📩 onMessage:', payload);
+    const body = payload.notification?.body || JSON.stringify(payload);
+    alert('📬 ' + body);
+  });
   </script>
 </body>
 </html>

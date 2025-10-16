@@ -9,7 +9,18 @@ environ.Env.read_env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env.str('SECRET_KEY')
 FIREBASE_SERVER_KEY = env.str('FIREBASE_SERVER_KEY')
-# FCM_SERVER_KEY = env.str('FCM_SERVER_KEY')
+
+FIREBASE_CONFIG = {
+    'apiKey': env.str('FIREBASE_API_KEY'),
+    'authDomain': env.str('FIREBASE_AUTH_DOMAIN'),
+    'projectId': env.str('FIREBASE_PROJECT_ID'),
+    'storageBucket': env.str('FIREBASE_STORAGE_BUCKET'),
+    'messagingSenderId': env.str('FIREBASE_MESSAGING_SENDER_ID'),
+    'appId': env.str('FIREBASE_APP_ID'),
+}
+
+FIREBASE_VAPID_KEY = env.str('FIREBASE_VAPID_KEY')
+
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
@@ -217,8 +228,9 @@ STATIC_ROOT = os.path.join('static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATICFILES_DIRS = (
-     os.path.join(BASE_DIR / "staticfiles"),
-)
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # bu joyda sizning firebase-messaging-sw.js joylashgan bo‘ladi
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"  # collectstatic shu yerga yig‘adi
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

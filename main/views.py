@@ -238,15 +238,17 @@ def send_message_notification(message):
     """Xabar yuborilganda push notification yuborish"""
     sender = message.sender
     chat_room = message.room
-    
+    # print (sender)
+    # print (chat_room.user_1)
+    # print (chat_room.user_2)
     # Kimga notification yuborilishi kerak
     if sender == chat_room.user_1:
         receiver = chat_room.user_2
     else:
         receiver = chat_room.user_1
-    
     # Qabul qiluvchining FCM token larini olish
     try:
+
         fcm_tokens = FCMToken.objects.filter(user=receiver)
         
         notification_title = f"Yangi havar"
@@ -262,9 +264,10 @@ def send_message_notification(message):
             'sender_id': str(sender.id),
             'type': 'new_message'
         }
-        
+        # print (data)
         # Har bir token ga notification yuborish
         for fcm_token in fcm_tokens:
+            print(1111)
             FCMService.send_push_notification(
                 fcm_token.token,
                 notification_title,
@@ -280,23 +283,29 @@ def send_message_notification(message):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def save_fcm_token(request):
-    token = request.data.get('token')
-    if not token:
-        return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Eski token larni o'chirish (optional)
-    FCMToken.objects.filter(user=request.user).delete()
-    
-    # Yangi token ni saqlash
-    fcm_token, created = FCMToken.objects.get_or_create(
-        user=request.user,
-        token=token
-    )
-    
-    return Response({
-        'status': 'success',
-        'created': created
-    }, status=status.HTTP_201_CREATED)
+    """
+    Frontenddan yuborilgan Firebase tokenni saqlaydi.
+    """
+    try:
+        data = json.loads(request.body)
+        token = data.get('token')
+
+        if not token:
+            return Response({'error': 'Token topilmadi'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Foydalanuvchining tokenini yangilash yoki yaratish
+        fcm_token, created = FCMToken.objects.get_or_create(
+            user=request.user,
+            token=token
+        )
+
+        if not created:
+            return Response({'message': 'Token allaqachon mavjud'}, status=status.HTTP_200_OK)
+
+        return Response({'message': 'Token saqlandi'}, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -408,7 +417,12 @@ def chat_page(request, room_id):
     """Oddiy chat sahifasi"""
     chat_room = ChatRoom.objects.get(id=room_id)
     messages = Message.objects.filter(room=chat_room)
-    return render(request, "chat.html", {"chat_room": chat_room, "messages": messages})
+    context = {
+        'FIREBASE_CONFIG': settings.FIREBASE_CONFIG,
+        'FIREBASE_VAPID_KEY': settings.FIREBASE_VAPID_KEY,
+        "chat_room": chat_room, "messages": messages
+    }
+    return render(request, "chat.html", context)
 
 
 @login_required
@@ -435,7 +449,7 @@ def send_message_view(request, room_id):
 
             # Push notification yuborish
             send_message_notification(message)
-
+  
         return JsonResponse({
             "id": message.id,
             "sender": message.sender.id,
@@ -444,6 +458,39 @@ def send_message_view(request, room_id):
 
     return JsonResponse({"error": "Noto‘g‘ri so‘rov"}, status=400)
 
+import json
+from django.views.decorators.csrf import csrf_exempt
+@csrf_exempt
+@login_required
+def save_fcm_token(request):
+    """Frontenddan FCM tokenni qabul qilib saqlaydi"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST so‘rov yuboring"}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Noto‘g‘ri JSON format"}, status=400)
+
+    token = data.get("token")
+    if not token:
+        return JsonResponse({"error": "Token berilmagan"}, status=400)
+
+    # 🔎 Mavjud tokenni tekshiramiz
+    existing_token = FCMToken.objects.filter(token=token).first()
+
+    if existing_token:
+        # Agar token boshqa userga tegishli bo‘lsa, yangilaymiz
+        if existing_token.user != request.user:
+            existing_token.user = request.user
+            existing_token.save(update_fields=["user"])
+            return JsonResponse({"status": "updated", "token": token})
+        else:
+            return JsonResponse({"status": "already_exists", "token": token})
+
+    # ✅ Token yo‘q bo‘lsa, yangi yozuv yaratamiz
+    FCMToken.objects.create(user=request.user, token=token)
+    return JsonResponse({"status": "created", "token": token})
 
 
 # push_service = FCMNotification(api_key=settings.FCM_SERVER_KEY)
