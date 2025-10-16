@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat sahifasi</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    .chat-box { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+    .msg { margin: 5px; padding: 8px; border-radius: 8px; }
+    .me { background-color: #d1ffd1; text-align: right; }
+    .other { background-color: #eaeaea; text-align: left; }
+  </style>
+</head>
+<body>
+  <h2>💬 {{ chat_room }}</h2>
+
+  <div class="chat-box" id="chatBox">
+    {% for msg in messages %}
+      <div class="msg {% if msg.sender == request.user %}me{% else %}other{% endif %}">
+        <strong>{{ msg.sender.username }}:</strong> {{ msg.content }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <form id="msgForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="text" id="msgInput" name="content" placeholder="Xabar yozing..." style="width:80%">
+    <button type="submit">Yuborish</button>
+  </form>
+
+  <script>
+    const roomId = "{{ chat_room.id }}";
+
+    document.getElementById("msgForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      
+      const response = await fetch(`/chat/${roomId}/send/`, {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const box = document.getElementById("chatBox");
+        const div = document.createElement("div");
+        div.classList.add("msg", "me");
+        div.innerHTML = `<strong>Siz:</strong> ${data.content}`;
+        box.appendChild(div);
+        document.getElementById("msgInput").value = "";
+      } else {
+        alert("Xatolik: " + data.error);
+      }
+    });
+  </script>
+
+  <script>
+    // 🔥 Firebase sozlamalari
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyBTWh23G8dOx_dE6rXFjH-6OCArLwIPcDg",
+
+        authDomain: "egasidan-35edc.firebaseapp.com",
+
+        projectId: "egasidan-35edc",
+
+        storageBucket: "egasidan-35edc.firebasestorage.app",
+
+        messagingSenderId: "1044507351309",
+
+        appId: "1:1044507351309:web:2bd1282ff17114fc9f3844"
+
+        };
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // 🔔 Brauzerdan ruxsat olish
+    messaging.requestPermission()
+      .then(() => messaging.getToken())
+      .then(token => {
+        console.log("📱 Token:", token);
+        // Bu tokenni backendga yuborish (agar kerak bo‘lsa)
+        fetch("/save-token/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: JSON.stringify({ token })
+        });
+      })
+      .catch(err => console.error("Permission berilmadi:", err));
+
+    // 🔔 Notification qabul qilish
+    messaging.onMessage(payload => {
+      console.log("🔔 Yangi push:", payload);
+      alert("📩 Yangi xabar: " + payload.notification.body);
+    });
+  </script>
+</body>
+</html>

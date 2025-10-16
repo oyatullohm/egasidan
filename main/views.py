@@ -229,7 +229,7 @@ def message_create(request, message_id):
         message.save()
 
         # Push notification yuborish
-        # send_message_notification(message)
+        send_message_notification(message)
 
     serializer = MessageSerializer(message, context={'request': request})
     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -249,7 +249,7 @@ def send_message_notification(message):
     try:
         fcm_tokens = FCMToken.objects.filter(user=receiver)
         
-        notification_title = f"Yangi xabar {sender} dan"
+        notification_title = f"Yangi havar"
         notification_body = message.content[:100] + "..." if len(message.content) > 100 else message.content
         
         # Agar content bo'sh bo'lsa va rasm bo'lsa
@@ -396,7 +396,55 @@ def user_detail(request,pk):
             return Response ({"user": None})
         return Response(UserSerializer(user, many=False).data)
     return Response({'permission':None})
-    
+ 
+   
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import render
+
+@login_required
+def chat_page(request, room_id):
+    """Oddiy chat sahifasi"""
+    chat_room = ChatRoom.objects.get(id=room_id)
+    messages = Message.objects.filter(room=chat_room)
+    return render(request, "chat.html", {"chat_room": chat_room, "messages": messages})
+
+
+@login_required
+def send_message_view(request, room_id):
+    """Ajax orqali xabar yuborish"""
+    if request.method == "POST":
+        content = request.POST.get("content", "")
+        image = request.FILES.get("image")
+
+        try:
+            chat_room = ChatRoom.objects.get(id=room_id)
+        except ChatRoom.DoesNotExist:
+            return JsonResponse({"error": "Chat topilmadi"}, status=404)
+
+        with transaction.atomic():
+            message = Message.objects.create(
+                sender=request.user,
+                room=chat_room,
+                content=content
+            )
+            if image:
+                message.image = image
+            message.save()
+
+            # Push notification yuborish
+            send_message_notification(message)
+
+        return JsonResponse({
+            "id": message.id,
+            "sender": message.sender.id,
+            "content": message.content,
+        })
+
+    return JsonResponse({"error": "Noto‘g‘ri so‘rov"}, status=400)
+
+
 
 # push_service = FCMNotification(api_key=settings.FCM_SERVER_KEY)
 
