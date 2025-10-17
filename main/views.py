@@ -238,21 +238,15 @@ def send_message_notification(message):
     """Xabar yuborilganda push notification yuborish"""
     sender = message.sender
     chat_room = message.room
-    # print (sender)
-    # print (chat_room.user_1)
-    # print (chat_room.user_2)
-    # Kimga notification yuborilishi kerak
+
     if sender == chat_room.user_1:
         receiver = chat_room.user_2
     else:
         receiver = chat_room.user_1
-    # Qabul qiluvchining FCM token larini olish
     try:
 
         fcm_tokens = FCMToken.objects.filter(user=receiver)
-        print(8888888888888888888888888888888)
-        print(fcm_tokens)
-        print(fcm_tokens)
+
         notification_title = f"Yangi havar"
         notification_body = message.content[:100] + "..." if len(message.content) > 100 else message.content
         
@@ -266,10 +260,8 @@ def send_message_notification(message):
             'sender_id': str(sender.id),
             'type': 'new_message'
         }
-        # print (data)
-        # Har bir token ga notification yuborish
+
         for fcm_token in fcm_tokens:
-            print(11115555555555555555555555)
             FCMService.send_push_notification(
                 fcm_token.token,
                 notification_title,
@@ -494,27 +486,36 @@ def save_fcm_token(request):
     FCMToken.objects.get_or_create(user=request.user, token=token)
     return JsonResponse({"status": "created", "token": token})
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_fcm_token_(request):
+    """Frontenddan FCM tokenni qabul qilib saqlaydi"""
+    if request.method != "POST":
+        return Response({"error": "POST so‘rov yuboring"}, status=405)
 
-# push_service = FCMNotification(api_key=settings.FCM_SERVER_KEY)
+    data = json.loads(request.body)
+    token = data.get('token')
+    if not token:
+        return Response({"error": "Token berilmagan"}, status=400)
 
-# class RegisterDevice(APIView):
-#     permission_classes = [IsAuthenticated]
+    # 🔎 Mavjud tokenni tekshiramiz
+    existing_token = FCMToken.objects.filter(token=token).first()
 
-#     def post(self, request):
-#         token = request.data.get('token')
-#         DeviceToken.objects.update_or_create(user=request.user, defaults={'token': token})
-#         return Response({"message": "Token saqlandi"})
+    if existing_token:
+        # Agar token boshqa userga tegishli bo‘lsa, yangilaymiz
+        if existing_token.user != request.user:
+            existing_token.user = request.user
+            existing_token.save(update_fields=["user"])
+            return Response({"status": "updated", "token": token})
+        else:
+            return Response({"status": "already_exists", "token": token})
 
-# class SendNotification(APIView):
-#     def post(self, request):
-#         title = request.data.get('title')
-#         body = request.data.get('body')
-#         tokens = list(DeviceToken.objects.values_list('token', flat=True))
-#         result = push_service.notify_multiple_devices(
-#             registration_ids=tokens,
-#             message_title=title,
-#             message_body=body
-#         )
-#         return Response(result)               
-        
-    
+    FCMToken.objects.get_or_create(user=request.user, token=token)
+    return Response({"status": "created", "token": token})
+
+@api_view(['GET'])
+def get_firebase_key(request):
+    return Response({
+        'FIREBASE_CONFIG': settings.FIREBASE_CONFIG,
+        'FIREBASE_VAPID_KEY': settings.FIREBASE_VAPID_KEY,
+    })
