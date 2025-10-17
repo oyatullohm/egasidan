@@ -1,32 +1,41 @@
-# services/fcm_service.py
+import json
 import requests
-
-from Admin import settings
-from django.core.exceptions import ObjectDoesNotExist
-
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from Admin.settings import FIREBASE_CREDENTIALS
 class FCMService:
-    @staticmethod
-    def send_push_notification(fcm_token, title, body, data=None):
-        url = 'https://fcm.googleapis.com/fcm/send'
-        
+    SCOPES = ["https://www.googleapis.com/auth/firebase.messaging"]
+    FCM_URL ="https://fcm.googleapis.com/v1/projects/egasidan-35edc/messages:send"
+
+    @classmethod
+    def _get_access_token(cls):
+        credentials = service_account.Credentials.from_service_account_file(
+            FIREBASE_CREDENTIALS,  # manzilini moslashtir
+            scopes=cls.SCOPES
+        )
+        credentials.refresh(Request())
+        return credentials.token
+
+    @classmethod
+    def send_push_notification(cls, token, title, body, data=None):
+        access_token = cls._get_access_token()
+
         headers = {
-            'Authorization': f'key={settings.FIREBASE_SERVER_KEY}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json; UTF-8",
         }
-        
-        payload = {
-            'to': fcm_token,
-            'notification': {
-                'title': title,
-                'body': body,
-                'sound': 'default'
-            },
-            'data': data or {}
+
+        message = {
+            "message": {
+                "token": token,
+                "notification": {
+                    "title": title,
+                    "body": body,
+                },
+                "data": data or {},
+            }
         }
-        
-        try:
-            response = requests.post(url, json=payload, headers=headers)
-            return response.status_code == 200
-        except Exception as e:
-            print(f"FCM Error: {e}")
-            return False
+
+        response = requests.post(cls.FCM_URL, headers=headers, data=json.dumps(message))
+        print("🔔 FCM javobi:", response.status_code, response.text)
+        return response

@@ -250,7 +250,9 @@ def send_message_notification(message):
     try:
 
         fcm_tokens = FCMToken.objects.filter(user=receiver)
-        
+        print(8888888888888888888888888888888)
+        print(fcm_tokens)
+        print(fcm_tokens)
         notification_title = f"Yangi havar"
         notification_body = message.content[:100] + "..." if len(message.content) > 100 else message.content
         
@@ -267,7 +269,7 @@ def send_message_notification(message):
         # print (data)
         # Har bir token ga notification yuborish
         for fcm_token in fcm_tokens:
-            print(1111)
+            print(11115555555555555555555555)
             FCMService.send_push_notification(
                 fcm_token.token,
                 notification_title,
@@ -280,32 +282,32 @@ def send_message_notification(message):
         pass
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def save_fcm_token(request):
-    """
-    Frontenddan yuborilgan Firebase tokenni saqlaydi.
-    """
-    try:
-        data = json.loads(request.body)
-        token = data.get('token')
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def save_fcm_token(request):
+#     """
+#     Frontenddan yuborilgan Firebase tokenni saqlaydi.
+#     """
+#     try:
+#         data = json.loads(request.body)
+#         token = data.get('token')
 
-        if not token:
-            return Response({'error': 'Token topilmadi'}, status=status.HTTP_400_BAD_REQUEST)
+#         if not token:
+#             return Response({'error': 'Token topilmadi'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Foydalanuvchining tokenini yangilash yoki yaratish
-        fcm_token, created = FCMToken.objects.get_or_create(
-            user=request.user,
-            token=token
-        )
+#         # Foydalanuvchining tokenini yangilash yoki yaratish
+#         fcm_token, created = FCMToken.objects.get_or_create(
+#             user=request.user,
+#             token=token
+#         )
 
-        if not created:
-            return Response({'message': 'Token allaqachon mavjud'}, status=status.HTTP_200_OK)
+#         if not created:
+#             return Response({'message': 'Token allaqachon mavjud'}, status=status.HTTP_200_OK)
 
-        return Response({'message': 'Token saqlandi'}, status=status.HTTP_201_CREATED)
+#         return Response({'message': 'Token saqlandi'}, status=status.HTTP_201_CREATED)
 
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#     except Exception as e:
+#         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -489,7 +491,7 @@ def save_fcm_token(request):
             return JsonResponse({"status": "already_exists", "token": token})
 
     # ✅ Token yo‘q bo‘lsa, yangi yozuv yaratamiz
-    FCMToken.objects.create(user=request.user, token=token)
+    FCMToken.objects.get_or_create(user=request.user, token=token)
     return JsonResponse({"status": "created", "token": token})
 
 

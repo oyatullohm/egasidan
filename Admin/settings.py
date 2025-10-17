@@ -4,12 +4,18 @@ import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+from google.oauth2 import service_account
+import json
 env = environ.Env()
 environ.Env.read_env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env.str('SECRET_KEY')
-FIREBASE_SERVER_KEY = env.str('FIREBASE_SERVER_KEY')
 
+# firebase_credentials_json = env.str("FIREBASE_CREDENTIALS")
+# FIREBASE_CREDENTIALS = json.loads(firebase_credentials_json)
+FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, "Admin/firebase-key.json")
+
+FIREBASE_SERVER_KEY = env.str('FIREBASE_SERVER_KEY')
 FIREBASE_CONFIG = {
     'apiKey': env.str('FIREBASE_API_KEY'),
     'authDomain': env.str('FIREBASE_AUTH_DOMAIN'),

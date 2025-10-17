@@ -93,3 +93,4 @@ celerybeat-schedule
 https://github.com/YMirodilbek/qwe.git
 venv/
 media/
+firebase-key.json

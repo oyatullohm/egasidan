@@ -20,7 +20,7 @@ messaging.setBackgroundMessageHandler(function(payload) {
   const title = payload.notification.title;
   const options = {
     body: payload.notification.body,
-    icon: '/static/logo.png'
+    // icon: '/static/logo.png'
   };
   return self.registration.showNotification(title, options);
 });
