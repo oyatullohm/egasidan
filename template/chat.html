@@ -35,8 +35,6 @@
 
   <script>
     const roomId = "{{ chat_room.id }}";
-
-    // 📨 Xabar yuborish formasi
     document.getElementById("msgForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const formData = new FormData(this);
@@ -72,14 +70,12 @@
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
 
-  // Public VAPID key - Firebase Console dan oling va trim qiling
    const VAPID_KEY = "{{ FIREBASE_VAPID_KEY }}";
-  // Tugma bosilganda ishlaydigan funksiya
   async function enableNotifications() {
     try {
       if (!('serviceWorker' in navigator)) throw new Error('Service Worker qo`llab-quvvatlanmaydi');
 
-      // 1) ro'yxatdan o'tkaz (root scope uchun path /firebase-messaging-sw.js)
+
       console.log('🔁 Registering service worker...');
       const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {scope: '/'});
       console.log('✅ register() returned:', registration);
@@ -88,11 +84,11 @@
       const readyReg = await navigator.serviceWorker.ready;
       console.log('✅ navigator.serviceWorker.ready:', readyReg);
 
-      // 3) messaging bilan service workerni bog'lash (v8)
+  
       try {
         messaging.useServiceWorker(readyReg);
       } catch (e) {
-        // ba'zan v8 da useServiceWorker ishlamasligi mumkin, ammo readyReg ni getToken ga beramiz
+        
         console.warn('useServiceWorker warning:', e);
       }
 

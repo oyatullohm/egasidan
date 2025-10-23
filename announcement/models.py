@@ -51,6 +51,7 @@ class Brand(models.Model):
     BRAND_TYPE = (
         ("avto","avto"),
         ("electronics","electronics"),
+        ("sport","sport"),
         ("boshqa","boshqa"),
     ) 
     
