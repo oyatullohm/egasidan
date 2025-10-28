@@ -588,7 +588,7 @@ class Electronics(BaseProduct):
 ]
     electronic_type = models.CharField(max_length=55, choices=ELECTRONIC_TYPES )
     brand = models.CharField(max_length=100)
-    model = models.ForeignKey(Modell, on_delete=models.CASCADE, related_name='electronics')
+    model = models.CharField(max_length=55, null=True, blank=True )
     warranty = models.BooleanField(default=False)
     warranty_months = models.PositiveIntegerField(blank=True, null=True)
     
