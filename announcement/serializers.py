@@ -231,7 +231,7 @@ class ElectronicslistSerializer(serializers.ModelSerializer):
 class ElectronicsSerializer(serializers.ModelSerializer):
     madel_name = serializers.SerializerMethodField()
     model = serializers.SerializerMethodField()
-    brand = serializers.SerializerMethodField()
+    # brand = serializers.SerializerMethodField()
     content_type = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     dislikes_count = serializers.SerializerMethodField()
@@ -250,8 +250,8 @@ class ElectronicsSerializer(serializers.ModelSerializer):
         ]
     def get_model(self, obj):
         return f"{obj.model.name}"
-    def get_brand(self, obj):
-        return f"{obj.model.brand.name}"
+    # def get_brand(self, obj):
+    #     return f"{obj.model.brand.name}"
     def get_madel_name(self, obj):
         return 'electronic'
     
