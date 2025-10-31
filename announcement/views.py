@@ -41,11 +41,11 @@ def announcements_all_statistic(request):
         
     })
     
+from decimal import InvalidOperation
+
 @api_view(["GET"])
 def announcements_all(request):
     filters = {"is_active": True}
-
-    # query_params tekshirish
     district = request.query_params.get("district")
     if district:
         filters["district_id"] = district
@@ -66,12 +66,11 @@ def announcements_all(request):
     if price:
         try:
             price = int(price)
-            filters['price__gte'] = price - 50000   # masalan 25 mingdan past 20 ming
-            filters['price__lte'] = price + 50000  # yuqoriga 30 ming
-        except : pass
-            
+            filters['price__gte'] = price - 50000
+            filters['price__lte'] = price + 50000
+        except:
+            pass
 
-    
     model_serializer_map = [
         (Vehicle, VehiclelistSerializer),
         (Property, PropertylistSerializer),
@@ -85,17 +84,24 @@ def announcements_all(request):
 
     all_data = []
     for model, serializer in model_serializer_map:
-        queryset = model.objects.filter(**filters).select_related('category').order_by("-id")
-        serialized = serializer(queryset, many=True).data
-        if serialized:
-            all_data += serialized
+        try:
+            queryset = model.objects.filter(**filters).select_related('category').order_by("-id")
+            serialized = serializer(queryset, many=True).data
+            if serialized:
+                all_data += serialized
+        except InvalidOperation as e:
+            print(f"⚠️ InvalidOperation: {model.__name__}")
+            continue
+        except Exception as e:
+            print(f"⚠️ Error in {model.__name__}: {e}")
+            continue
 
-    # Paginatsiya
     paginator = PageNumberPagination()
-    paginator.page_size = 20 # har bir sahifada 20 tadan
+    paginator.page_size = 20
     result_page = paginator.paginate_queryset(all_data, request)
 
     return paginator.get_paginated_response(result_page)
+
 
 @api_view(["GET"])
 def announcements_all_false(request):
