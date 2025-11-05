@@ -60,7 +60,7 @@ def announcements_all(request):
     
     sub_category = request.query_params.get('sub-category')
     if sub_category:
-        filters['category'] = sub_category
+        filters['category_id'] = sub_category
     
     price = request.query_params.get('price')
     if price:
