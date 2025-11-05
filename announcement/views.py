@@ -1,11 +1,12 @@
-
-from .serializers import *
-from .models import *
-from rest_framework.response import Response
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
-from .decorators import IsStaff
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from decimal import InvalidOperation
+from .decorators import IsStaff
+from .serializers import *
+from .models import *
+
 
 @api_view(["GET"])
 @permission_classes([IsStaff])
@@ -41,7 +42,6 @@ def announcements_all_statistic(request):
         
     })
     
-from decimal import InvalidOperation
 
 @api_view(["GET"])
 def announcements_all(request):
@@ -56,7 +56,7 @@ def announcements_all(request):
     
     category = request.query_params.get('category')
     if category:
-        filters['category__category'] = category
+        filters['category__category_id'] = category
     
     sub_category = request.query_params.get('sub-category')
     if sub_category:
