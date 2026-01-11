@@ -2,26 +2,11 @@ from django.contrib import admin
 from .models import *
 
 admin.site.register(Category)
-admin.site.register(SubCategory)
+# admin.site.register(SubCategory)
 admin.site.register(Region)
-admin.site.register(District)
+admin.site.register(Product)
+admin.site.register(Complaint)
 admin.site.register(Image)
-admin.site.register(Brand)
-admin.site.register(Modell)
-admin.site.register(Favorite)
+
 admin.site.register(Dislike)
 
-
-admin.site.register(Vehicle)
-admin.site.register(Property)
-admin.site.register(Electronics)
-admin.site.register(HouseholdItems)
-admin.site.register(Job)
-admin.site.register(SportingGoods)
-admin.site.register(Service)
-admin.site.register(Pet)
-
-@admin.register(ContentType)
-class ContentTypeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'app_label', 'model')
-    search_fields = ('app_label', 'model')

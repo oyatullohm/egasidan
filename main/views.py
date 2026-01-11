@@ -1,18 +1,33 @@
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
+from django.db.models import OuterRef, Subquery,Prefetch ,Q, Max
+from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
-from google.auth.transport import requests
+from django.utils.crypto import salted_hmac
 from rest_framework.views import APIView
-from django.db.models import Max
-from google.oauth2 import id_token
+from django.http import JsonResponse
+from django.shortcuts import render
+from .fcm_service import FCMService
+from django.db import transaction
 from rest_framework import status
 from pyfcm import FCMNotification
 from django.conf import settings
+from .models import FCMToken
 from .serializers import *
+import random
+import json
+
 User = get_user_model()
+
+
+import random
+def random_number():
+    return  random.randint(0,9999)
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -28,81 +43,91 @@ def user_update(request):
     user = request.user
     user.first_name = request.data['first_name']
     user.last_name = request.data['last_name']
+    user.image = request.data['image']
     user.save()
     return Response(UserSerializer(user, many= False).data)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])  # faqat login bo'lgan userlarga ruxsat
-def password_update( request):
-    user = request.user
-    old_password = request.data.get("old_password")
-    new_password = request.data.get("new_password")
-
-    # Eski parolni tekshirish
-    if not user.check_password(old_password):
-        return Response({"error": "Eski parol noto'g'ri!"}, status=status.HTTP_400_BAD_REQUEST)
-
-    user.set_password(new_password)
-    user.save()
-
-    return Response({"success": "Parol muvaffaqiyatli o'zgartirildi!"}, status=status.HTTP_200_OK)
-
-
 class RegisterView(APIView):
     def post(self, request):
-        data = request.data
-        if data.get('email') and User.objects.filter(email=data['email']).exists():
-            return Response({'email': 'Bu email allaqachon ro‘yxatdan o‘tgan.'}, status=status.HTTP_400_BAD_REQUEST)
-        if data.get('phone') and User.objects.filter(phone=data['phone']).exists():
-            return Response({'phone': 'Bu telefon raqam allaqachon ro‘yxatdan o‘tgan.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = CustomRegisterSerializer(data=data)
-        if serializer.is_valid():
-            user = serializer.save(request)
-            user.phone= data.get('phone')
-            # user.is_staff= True
-            # user.is_superuser= True
-            user.save()
-            refresh = RefreshToken.for_user(user)
+        data = request.data
+        phone = data.get('phone')
+        request.session['phone'] = phone
+        code = random_number()
+        request.session['code_hash'] = salted_hmac(
+            'sms',
+            str(code)
+        ).hexdigest()
+        request.session.set_expiry(300)  
+        if data.get('phone') and CustomUser.objects.filter(phone=phone).exists():
+            user = CustomUser.objects.get(phone=phone)
+
             return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                    'phone': user.phone
-                }
+                'success': True,
+                'code':code
+      
             }, status=status.HTTP_201_CREATED)
             
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = CustomUser.objects.create_user(
+            username=phone,
+            phone=phone,
+            # password=phone
+        )
+        
+        if user:
+            # refresh = RefreshToken.for_user(user)
+            return Response({
+                   'success': True,
+                   'code':code
+                
+                }, status=status.HTTP_201_CREATED)
+        
+        
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
+        request_phone = request.data.get('phone')
+        request_code = request.data.get('code')
 
-        if email is None or password is None:
-            return Response({'error': 'Email and password required'}, status=status.HTTP_400_BAD_REQUEST)
+        phone = request.session.get('phone')
+        code_hash = request.session.get('code_hash')
 
-        user = authenticate(request, email=email, password=password)
-        if user is not None:
+        if not all([phone, code_hash]):
+            return Response({'error': 'Session expired'}, status=400)
+
+        check_hash = salted_hmac(
+            'sms',
+            str(request_code)
+        ).hexdigest()
+
+        if phone == request_phone and check_hash == code_hash:
+            try:
+                user = CustomUser.objects.get(phone=phone)
+            except CustomUser.DoesNotExist:
+                return Response({'error': 'User not found'}, status=404)
+
             refresh = RefreshToken.for_user(user)
+
+            # session tozalaymiz
+            request.session.flush()
+            player_id = request.data.get('player_id')
+            if player_id:
+                user.onesignal_player_id = player_id
+                user.save()
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'user': {
                     'id': user.id,
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
                     'phone': user.phone,
-                    "is_staff":user.is_staff
+                    'is_staff': user.is_staff
                 }
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            }, status=200)
+
+        return Response({'error': 'Invalid code'}, status=401)
 
 
 class RefreshTokenView(APIView):
@@ -119,47 +144,13 @@ class RefreshTokenView(APIView):
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class GoogleLoginAPIView(APIView):
-    def post(self, request):
-        token = request.data.get('id_token')
-
-        if not token:
-            return Response({'error': 'No token provided'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            idinfo = id_token.verify_oauth2_token(
-                token,
-                requests.Request(),
-                settings.SOCIALACCOUNT_PROVIDERS['google']['APP'][0]['client_id']
-            )
-
-    
-            email = idinfo.get('email')
-            first_name = idinfo.get('given_name', '')
-            last_name = idinfo.get('family_name', '')
-
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={'first_name': first_name, 'last_name': last_name}
-            )
-
-            refresh = RefreshToken.for_user(user)
-
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh)
-            })
-
-        except ValueError as e:
-            print("Token validatsiyasida xato:", e)  # Xatoni konsolga chiqaradi
-            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def chat_create(request):
     user_1 = request.user
     user_2_id = request.data.get('user_2_id')
+    product = request.data.get('product_id')
 
     try:
         user_2 = User.objects.get(id=user_2_id)
@@ -174,146 +165,150 @@ def chat_create(request):
     room_name = f"chat_{ids[0]}_{ids[1]}"
 
     chat_room, created = ChatRoom.objects.get_or_create(
+
         user_1__in=[user_1, user_2],
         user_2__in=[user_1, user_2],
         defaults={'user_1': user_1, 'user_2': user_2, 'owner': user_1, 'room_name': room_name}
     )
-
+    chat_room.product_id=product
+    chat_room.save()
+    
     serializer = ChatRoomSerializer(chat_room)
     return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def chat_list(request):
     user = request.user
-    if not user.is_authenticated:
-        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-    chats = (
-        ChatRoom.objects.filter(models.Q(user_1=user) | models.Q(user_2=user))
-        .annotate(last_message=Max("messages__timestamp"))  # eng so‘nggi xabar
-        .select_related("user_1", "user_2").prefetch_related('messages')
-        .order_by("-last_message")  # oxirgi xabar bo‘yicha saralash
+
+    last_message_qs = (
+        Message.objects
+        .filter(room=OuterRef('pk'))
+        .order_by('-timestamp')
     )
-    serializer = ChatRoomSerializer(chats, many=True,context={'request': request})
+
+    chats = (
+        ChatRoom.objects
+        .filter(Q(user_1=user) | Q(user_2=user))
+        .select_related('product', 'user_1', 'user_2', 'owner')
+        .prefetch_related(
+            Prefetch(
+                'product__image',
+                queryset=Image.objects.only('id', 'image'),
+                to_attr='prefetched_images'
+            )
+        )
+        .annotate(
+            last_message_content=Subquery(
+                last_message_qs.values('content')[:1]
+            ),
+            last_message_time=Subquery(
+                last_message_qs.values('timestamp')[:1]
+            ),
+            last_message_sender_id=Subquery(
+                last_message_qs.values('sender_id')[:1]
+            )
+        )
+        .order_by('-last_message_time')
+    )
+
+    serializer = ChatRoomSerializer(
+        chats,
+        many=True,
+        context={'request': request}
+    )
     return Response(serializer.data)
 
-# views.py
-from django.db import transaction
-from .fcm_service import FCMService
-from .models import FCMToken
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def message_create(request, message_id):
     user = request.user
+
     try:
-        chat_room = ChatRoom.objects.get(id=message_id)
+        chat_room = ChatRoom.objects.select_related(
+            'user_1',
+            'user_2'
+        ).get(id=message_id)
     except ChatRoom.DoesNotExist:
-        return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Chat room not found'}, status=404)
 
-    if user != chat_room.user_1 and user != chat_room.user_2:
-        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    if user.id not in (chat_room.user_1_id, chat_room.user_2_id):
+        return Response({'error': 'Permission denied'}, status=403)
 
-    content = request.data.get('content', '')
-    image = request.FILES.get('image', None)
+    message = Message.objects.create(
+        sender=user,
+        room=chat_room,
+        content=request.data.get('content', ''),
+        image=request.FILES.get('image')
+    )
 
-    with transaction.atomic():
-        message = Message.objects.create(
-            sender=request.user,
-            room=chat_room,
+    send_message_notification(message, chat_room, user)
+
+    serializer = MessageSerializer(
+        message,
+        context={'request': request}
+    )
+    return Response(serializer.data, status=201)
+
+
+def send_message_notification(message, chat_room, sender):
+    receiver = (
+        chat_room.user_2
+        if sender.id == chat_room.user_1_id
+        else chat_room.user_1
+    )
+
+    fcm_tokens = FCMToken.objects.filter(
+        user_id=receiver.id
+    ).only('token')
+
+    if not fcm_tokens.exists():
+        return
+
+    notification_title = "Yangi xabar"
+
+    if message.content:
+        notification_body = (
+            message.content[:100] + "..."
+            if len(message.content) > 100
+            else message.content
         )
-        if content:
-            message.content = content
-        if image:
-            message.image = image
-        message.save()
-
-        # Push notification yuborish
-        send_message_notification(message)
-
-    serializer = MessageSerializer(message, context={'request': request})
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-def send_message_notification(message):
-    """Xabar yuborilganda push notification yuborish"""
-    sender = message.sender
-    chat_room = message.room
-
-    if sender == chat_room.user_1:
-        receiver = chat_room.user_2
+    elif message.image:
+        notification_body = "📷 Rasm"
     else:
-        receiver = chat_room.user_1
-    try:
+        notification_body = "Yangi xabar"
 
-        fcm_tokens = FCMToken.objects.filter(user=receiver)
+    data = {
+        'chat_room_id': str(chat_room.id),
+        'message_id': str(message.id),
+        'sender_id': str(sender.id),
+        'type': 'new_message'
+    }
 
-        notification_title = f"Yangi havar"
-        notification_body = message.content[:100] + "..." if len(message.content) > 100 else message.content
-        
-        # Agar content bo'sh bo'lsa va rasm bo'lsa
-        if not message.content and message.image:
-            notification_body = "📷 Rasm"
-        
-        data = {
-            'chat_room_id': str(chat_room.id),
-            'message_id': str(message.id),
-            'sender_id': str(sender.id),
-            'type': 'new_message'
-        }
-
-        for fcm_token in fcm_tokens:
-            FCMService.send_push_notification(
-                fcm_token.token,
-                notification_title,
-                notification_body,
-                data
-            )
-            
-    except FCMToken.DoesNotExist:
-        # FCM token topilmadi
-        pass
-
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def save_fcm_token(request):
-#     """
-#     Frontenddan yuborilgan Firebase tokenni saqlaydi.
-#     """
-#     try:
-#         data = json.loads(request.body)
-#         token = data.get('token')
-
-#         if not token:
-#             return Response({'error': 'Token topilmadi'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Foydalanuvchining tokenini yangilash yoki yaratish
-#         fcm_token, created = FCMToken.objects.get_or_create(
-#             user=request.user,
-#             token=token
-#         )
-
-#         if not created:
-#             return Response({'message': 'Token allaqachon mavjud'}, status=status.HTTP_200_OK)
-
-#         return Response({'message': 'Token saqlandi'}, status=status.HTTP_201_CREATED)
-
-#     except Exception as e:
-#         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    for token in fcm_tokens:
+        FCMService.send_push_notification(
+            token.token,
+            notification_title,
+            notification_body,
+            data
+        )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def message_list(request, message_id):
     user = request.user
     try:
-        chat_room = ChatRoom.objects.get(id=message_id)
+        chat_room = ChatRoom.objects.select_related('user_1', 'user_2').get(id=message_id)
     except ChatRoom.DoesNotExist:
         return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if user != chat_room.user_1 and user != chat_room.user_2:
         return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
-    messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('timestamp')
+    messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('-id')
     serializer = MessageSerializer(messages, many=True,context={'request': request})
     return Response(serializer.data)
 
@@ -360,6 +355,7 @@ def all_user(request):
         return Response(serializers.data)
     return Response({'permission':False})
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def user_is_staff(request,pk):
@@ -389,6 +385,7 @@ def user_is_active(request,pk):
         return Response({'success':is_active})
     return Response({'permission':None})
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_detail(request,pk):
@@ -400,11 +397,6 @@ def user_detail(request,pk):
         return Response(UserSerializer(user, many=False).data)
     return Response({'permission':None})
  
-   
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.http import JsonResponse
-from django.shortcuts import render
 
 @login_required
 def chat_page(request, room_id):
@@ -452,8 +444,6 @@ def send_message_view(request, room_id):
 
     return JsonResponse({"error": "Noto‘g‘ri so‘rov"}, status=400)
 
-import json
-from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 @login_required
 def save_fcm_token(request):
@@ -519,3 +509,4 @@ def get_firebase_key(request):
         'FIREBASE_CONFIG': settings.FIREBASE_CONFIG,
         'FIREBASE_VAPID_KEY': settings.FIREBASE_VAPID_KEY,
     })
+    

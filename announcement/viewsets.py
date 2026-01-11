@@ -1,10 +1,13 @@
 from rest_framework.permissions import  AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.response import Response
+from .tasks import send_price_notifications,  notify_followers_new_product
+from django.db.models import F , Prefetch, Count ,Q
 from rest_framework import viewsets
 from rest_framework import status
-from django.db.models import F
+from django.db import transaction
+from decimal import Decimal
 from .serializers import *
 from .decorators import *
 from .models import *
@@ -12,14 +15,49 @@ P_NUM = 20
 
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
-    http_method_names = ['post', 'put', 'delete'] 
-    permission_classes = [IsStaff]
+    http_method_names = ['post', 'put', 'delete', 'get'] 
+    
+    def get_permissions(self):
+        if self.action == 'list':
+            return [AllowAny()]
+        return [IsStaff()]
+    
+    def list(self, request):
+        pk = request.GET.get('id')
+        category  = Category.objects.get(id=pk)
+        sub_categories = (
+        category.children
+        .filter(level=2)
+        .prefetch_related(
+            Prefetch(
+                'children',
+                queryset=Category.objects.filter(level=3),
+                to_attr='prefetched_sub_subs'
+            )
+        )
+    )
+
+        serializer = SubCategorySerializer(sub_categories, many=True)
+        
+        return Response({
+            'success': True,
+            'sub_categories': serializer.data
+            
+    
+        })
 
     def create(self, request, *args, **kwargs):
         data = request.data
         name = data.get('name')
         img = data.get('img')
-        category = Category.objects.create(name=name,img=img)
+        category_id = data.get('category')
+        
+        category = Category.objects.create(name=name)
+        if img:
+            category.img = img  
+        if category_id:
+            category.category = Category.objects.get(id=category_id)
+        category.save()
         return Response({
              'success': True,
             'data': CategorySerializer(category, many = False).data
@@ -76,34 +114,64 @@ class CategoryViewSet(viewsets.ModelViewSet):
         }, status=400)  
 
 
-class SubCategoryViewSet(viewsets.ModelViewSet):
-    serializer_class = SubCategorySerializer
+class ModelViewSet(viewsets.ModelViewSet):
+    serializer_class = ModelSerializer
     http_method_names = ['post', 'put', 'delete'] 
-    permission_classes = [IsStaff]
+    # permission_classes = [IsStaff]
+    
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return [AllowAny()]
+        return [AllowAny()]
+        # return [IsStaff()]
 
+    def list(self, request, *args, **kwargs):
+        category = request.query_params.get('category')
+        queryset = Model.objects.filter(category_id=category).select_related('category')
+        serializer = ModelSerializer(queryset, many=True)
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            model = Model.objects.select_related('category').get(id=kwargs['pk'])
+            serializer = ModelSerializer(model, many=False)
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+        except Model.DoesNotExist:
+            return Response({
+                "success": False,
+                "error": "Model not found"
+            }, status=404)
+    
     def create(self, request, *args, **kwargs):
         data = request.data
         name = data.get('name')
-        category_id = data.get('category_id')
-        category = SubCategory.objects.create(name=name,category_id=category_id)
-        return Response({
-             'success': True,
-            'data': SubCategorySerializer(category, many = False).data
-        })
+        category_id = data.get('category')
 
+        model = Model.objects.create(name=name, category_id=category_id)
+        return Response({
+            'success': True,
+            'data': ModelSerializer(model, many=False).data
+        })
     def update(self, request, *args, **kwargs):
         data = request.data 
         id = kwargs['pk']
         name = data.get('name')
-        
+        category_id = data.get('category')
+     
         try:
-            category = SubCategory.objects.get(id=id)
-            category.name = name
-            category.save()
+            model = Model.objects.get(id=id)
+            model.name = name
+            model.category_id = category_id
+            model.save()
     
             return Response({
                 "success": True,
-                'data': SubCategorySerializer(category, many = False).data
+                'data': ModelSerializer(model, many = False).data
             })
         except:
             return Response({
@@ -112,8 +180,8 @@ class SubCategoryViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
-            category = SubCategory.objects.get(id=id)
-            category.delete()
+            model = Model.objects.get(id=id)
+            model.delete()
             
             return Response({
                 "success": True,
@@ -122,9 +190,9 @@ class SubCategoryViewSet(viewsets.ModelViewSet):
         except:
             return Response({
                 "success": False
-            })
+            })  
 
-
+   
 class RegionViewSet(viewsets.ModelViewSet):
     serializer_class = RegionSerializer
     http_method_names = ['post', 'put', 'delete'] 
@@ -175,155 +243,6 @@ class RegionViewSet(viewsets.ModelViewSet):
             })
 
 
-class DistrictViewSet(viewsets.ModelViewSet):
-    serializer_class = DistrictSerializer
-    http_method_names = ['post', 'put', 'delete'] 
-    permission_classes = [IsStaff]
-
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        name = data.get('name')
-        region_id = data.get('region_id')
-        
-        district = District.objects.create(name=name,region_id=region_id)
-        return Response({
-             'success': True,
-            'data': DistrictSerializer(district, many = False).data
-        })
-
-    def update(self, request, *args, **kwargs):
-        data = request.data 
-        id = kwargs['pk']
-        name = data.get('name')
-        try:
-            district = District.objects.get(id=id)
-            district.name = name
-            district.save()
-    
-            return Response({
-                "success": True,
-                'data': DistrictSerializer(district, many = False).data
-            })
-        except:
-            return Response({
-                "success": False
-            })
-    def destroy(self, request, *args, **kwargs):
-        try:
-            id = kwargs['pk']
-            district = District.objects.get(id=id)
-            district.delete()
-            
-            return Response({
-                "success": True,
-                
-            })
-        except:
-            return Response({
-                "success": False
-            })
-
-
-class BrandViewSet(viewsets.ModelViewSet):
-    serializer_class = BrandSerializer
-    http_method_names = ['post', 'put', 'delete'] 
-    permission_classes = [IsStaff]
-
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        name = data.get('name')
-        type = data.get('type')
-       
-        brand = Brand.objects.create(name=name,type=type)
-        return Response({
-             'success': True,
-            'data': BrandSerializer(brand, many = False).data
-        })
-
-    def update(self, request, *args, **kwargs):
-        data = request.data 
-        id = kwargs['pk']
-        name = data.get('name')
-     
-        try:
-            brand = Brand.objects.get(id=id)
-            brand.name = name
-
-            brand.save()
-    
-            return Response({
-                "success": True,
-                'data': BrandSerializer(brand, many = False).data
-            })
-        except:
-            return Response({
-                "success": False
-            })
-    def destroy(self, request, *args, **kwargs):
-        try:
-            id = kwargs['pk']
-            brand = Brand.objects.get(id=id)
-            brand.delete()
-            
-            return Response({
-                "success": True,
-                
-            })
-        except:
-            return Response({
-                "success": False
-            })
-    
-
-class ModellViewSet(viewsets.ModelViewSet):
-    serializer_class = ModellSerializer
-    http_method_names = ['post', 'put', 'delete'] 
-    permission_classes = [IsStaff]
-
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        name = data.get('name')
-        brand_id = data.get('brand_id')
-        
-        model = Modell.objects.create(name=name,brand_id=brand_id)
-        return Response({
-             'success': True,
-            'data': ModellSerializer(model, many = False).data
-        })
-
-    def update(self, request, *args, **kwargs):
-        data = request.data 
-        id = kwargs['pk']
-        name = data.get('name')
-        try:
-            model = Modell.objects.get(id=id)
-            model.name = name
-            model.save()
-    
-            return Response({
-                "success": True,
-                'data':ModellSerializer(model, many = False).data
-            })
-        except:
-            return Response({
-                "success": False
-            })
-    def destroy(self, request, *args, **kwargs):
-        try:
-            id = kwargs['pk']
-            model = Modell.objects.get(id=id)
-            model.delete()
-            
-            return Response({
-                "success": True,
-                
-            })
-        except:
-            return Response({
-                "success": False
-            })
-
-
 class ImageViewSet(viewsets.ModelViewSet):
     http_method_names = ['delete']
     def destroy(self, request, *args, **kwargs):
@@ -345,1162 +264,217 @@ class ImageViewSet(viewsets.ModelViewSet):
             })
 
 
-class VehicleViewSet(viewsets.ModelViewSet):
-    serializer_class = VehicleSerializer
-    queryset = Vehicle.objects.filter(is_active=True).order_by('-id')
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = VehiclelistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-        
-        
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "produced": "2025-09-01  null  ",
-            "phone_number": "+998900601044",
-            "vehicle_type": "str  url :/api/product/get-vehicle-type/",
-            "brand": "str  url :/api/product/get-brand/",
-            "model": "int  url :/api/product/get-model/1/",
-            "mileage": "int  250000  kl ",
-            "engine_size": "str  2.5 dvigatel_hajmi ",
-            "fuel_type": "str  url :/api/product/get-fuel-type/",
-            "transmission": "str  url :/api/product/get-transmission/",
-            "color": "str  max 40 ",
-        })
-
-
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        vehicle = self.get_object()
-         
-        if request.user.id != vehicle.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  vehicle.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            vehicle.image.add(img)
-            return Response({
-                'success': True,
-                'data': VehicleSerializer(vehicle, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        })
-    
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        vehicle = Vehicle.objects.get(id=pk)
-        if request.user.id != vehicle.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if vehicle.sold == 'sold':
-            vehicle.sold = 'not_sold'
-            vehicle.is_active = True
-        else:
-            vehicle.sold = 'sold'
-            vehicle.is_active = False
-        vehicle.save()
-        return Response({
-            'success': True,
-            'data': VehicleSerializer(vehicle, many = False).data
-        })
-        
-        
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            vehicle = Vehicle.objects.get(id=kwargs['pk'])
-        except Vehicle.DoesNotExist:
-            return Response({"detail": "Vehicle not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        Vehicle.objects.filter(id=vehicle.id).update(views_count=F('views_count') + 1)
-        vehicle.refresh_from_db()
-
-        serializer = VehicleSerializer(vehicle, context={'request': request})
-        return Response(serializer.data)
-
-
+class ProductViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve','get']:
             permission_classes = [AllowAny]
         else:
-            permission_classes = []
-        return [permission() for permission in permission_classes]
-
-
-    def create(self, request, *args, **kwargs):
-        
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image = request.FILES.get('image')
-        address =data.get('address')
-        produced =data.get('produced')
-        phone_number =data.get('phone_number')
-        vehicle_type =data.get('vehicle_type')
-        brand =data.get('brand')
-        model =data.get('model')
-        # year =data.get('year')
-        mileage =data.get('mileage')
-        engine_size =data.get('engine_size')
-        fuel_type =data.get('fuel_type')
-        transmission =data.get('transmission')
-        color =data.get('color')
-        
-        vehicle = Vehicle.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            condition = condition,
-            category_id = category,
-            district_id = district, 
-            address = address,
-            produced = produced,
-            phone_number = phone_number,
-            vehicle_type = vehicle_type,
-            brand = brand,
-            model_id = model,
-            # year = year,
-            mileage = mileage,
-            engine_size = engine_size,
-            fuel_type = fuel_type,
-            transmission = transmission,
-            color = color)
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            vehicle.image.add(img)
-        return Response({
-                'success': True,
-                'data': VehicleSerializer(vehicle, many = False).data
-            })
-
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            vehicle = self.get_object()  
-            if request.user.id != vehicle.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(vehicle.image.all()) 
-            vehicle.delete()
-            for img in images:
-                if not img.vehicle_set.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-
-
-class PropertyViewSet(viewsets.ModelViewSet):
-    serializer_class = PropertySerializer
-    queryset = Property.objects.filter(is_active=True).order_by('-id')
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = PropertylistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-    
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "produced": "2025-09-01  null  ",
-            "phone_number": "+998900601044",
-            "property_type": "str  url :/api/product/get-property-type/",
-            "rooms": "int 3",
-            "area": "int 250   m2",
-        })
-    
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        property = self.get_object()
-        if request.user.id != property.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  property.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            property.image.add(img)
-            return Response({
-                'success': True,
-                'data': PropertySerializer(property, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        })
-    
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        property = Property.objects.get(id=pk)
-        if request.user.id != property.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if property.sold == 'sold':
-            property.sold = 'not_sold'
-            property.is_active = True
-        else:
-            property.sold = 'sold'
-            property.is_active = False
-        property.save()
-        return Response({
-            'success': True,
-            'data': PropertySerializer(property, many = False).data
-        })
-    
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = []
-        return [permission() for permission in permission_classes]
-           
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            property= Property.objects.get(id=kwargs['pk'])
-        except Property.DoesNotExist:
-            return Response({"detail": "property not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        Property.objects.filter(id=property.id).update(views_count=F('views_count') + 1)
-        property.refresh_from_db()
-
-        serializer = PropertySerializer(property, context={'request': request})
-        return Response(serializer.data)
-    
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        old_price = data.get('old_price')
-        condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =data.get('image')
-        address =data.get('address')
-        produced =data.get('produced')
-        phone_number =data.get('phone_number')
-        property_type =data.get('property_type')
-        rooms =data.get('rooms')
-        area =data.get('area')   
-        property = Property.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            old_price = old_price,
-            condition = condition,
-            category_id = category,
-            district_id = district, 
-            address = address,  
-            produced = produced,
-            phone_number = phone_number,
-            property_type = property_type,
-            rooms = rooms,
-            area = area
-            )
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            property.image.add(img)
-        return Response({
-                'success': True,
-                'data': PropertySerializer(property, many = False).data
-            })  
-     
-        
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            property = self.get_object()  
-            if request.user.id != property.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(property.image.all()) 
-            property.delete()
-            for img in images:
-                if not img.property_set.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-
-
-class ElectronicsViewSet(viewsets.ModelViewSet):
-    serializer_class = ElectronicsSerializer
-    queryset = Electronics.objects.filter(is_active=True).order_by('-id')
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = ElectronicslistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-    
-    
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        old_price = data.get('old_price')
-        condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =request.FILES.get('image') 
-        address =data.get('address')
-        produced =data.get('produced')
-        phone_number =data.get('phone_number')
-        electronic_type = data.get('electronic_type')
-        brand = data.get('brand')
-        model = data.get('model')
-        warranty = data.get('warranty')
-        warranty_months = data.get('warranty_months')
-        
-        electronics = Electronics.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            old_price = old_price,
-            condition = condition,
-            category_id = category,
-            district_id = district,
-            address = address,
-            produced = produced,
-            phone_number = phone_number,
-            electronic_type = electronic_type,
-            brand = brand,
-            model = model,
-            warranty = warranty,
-            warranty_months = warranty_months
-            
-            )
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            electronics.image.add(img)
-        return Response({
-                'success': True,
-                'data': ElectronicsSerializer(electronics, many = False).data
-            })
-    
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            electronics = self.get_object()  
-            if request.user.id != electronics.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(electronics.image.all()) 
-            electronics.delete()
-            for img in images:
-                if not img.electronics_set.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "produced": "2025-09-01  null  ",
-            "phone_number": "+998900601044",
-            "electronic_type": "str  url :/api/product/get-electronic-type/",
-            "brand": "str max 100 ",
-            "model": "str max 100 ",
-            "warranty": "bool True False ",
-            "warranty_months": "int   null "
-        })
-    
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = []
+            permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
     
-            
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            electronic = Electronics.objects.get(id=kwargs['pk'])
-        except Electronics.DoesNotExist:
-            return Response({"detail": "electronic not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        Electronics.objects.filter(id=electronic.id).update(views_count=F('views_count') + 1)
-        electronic.refresh_from_db()
-
-        serializer = ElectronicsSerializer(electronic, context={'request': request})
-        return Response(serializer.data)
-   
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        electronics = self.get_object()
-        if request.user.id != electronics.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  electronics.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            electronics.image.add(img)
-            return Response({
-                'success': True,
-                'data': ElectronicsSerializer(electronics, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        })
-    
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        electronics = Electronics.objects.get(id=pk)
-        if request.user.id != electronics.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if electronics.sold == 'sold':
-            electronics.sold  = 'not_sold'
-            electronics.is_active = True
-        else:
-            electronics.sold  = 'sold'
-            electronics.is_active = False
-        electronics.save()
-        return Response({
-            'success': True,
-            'data': ElectronicsSerializer(electronics, many = False).data
-        })  
-
-
-class JobViewSet(viewsets.ModelViewSet):
-    serializer_class = JobSerializer
-    queryset = Job.objects.filter(is_active=True).order_by('-id')
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = JoblistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-    
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        old_price = data.get('old_price')
-        # condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =request.FILES.get('image') 
-        address =data.get('address')
-        telegram =data.get('telegram')
-        phone_number =data.get('phone_number')
-        job_type = data.get('job_type')
-        company = data.get('company')
-        application_deadline = data.get('application_deadline')
-        remote_work = data.get('remote_work')
-        job = Job.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            old_price = old_price,
-            # condition = condition,
-            category_id = category,
-            district_id = district,
-            address = address,
-            phone_number = phone_number,
-            telegram = telegram,
-            job_type = job_type,
-            company = company,
-            application_deadline = application_deadline,
-            remote_work = remote_work
-            )
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            job.image.add(img)
-        return Response({
-                'success': True,
-                'data': JobSerializer(job, many = False).data
-            })
-    
-            
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            job = Job.objects.get(id=kwargs['pk'])
-        except Job.DoesNotExist:
-            return Response({"detail": "job not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        Job.objects.filter(id=job.id).update(views_count=F('views_count') + 1)
-        job.refresh_from_db()
-
-        serializer = JobSerializer(job, context={'request': request})
-        return Response(serializer.data)
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            job = self.get_object()  
-            if request.user.id != job.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(job.image.all()) 
-            job.delete()
-            for img in images:
-                if not img.job_set.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "telegram": "str  max 100  null  telegram username @username  ",
-            "phone_number": "+998900601044",
-            "job_type": "str  url :/api/product/get-job-type/",
-            "company": "str max 100 ",
-            "application_deadline": "2025-09-01   null ",
-            "remote_work": "bool True False "
-        })
-   
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        job = self.get_object()
-        if request.user.id != job.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  job.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            job.image.add(img)
-            return Response({
-                'success': True,
-                'data': JobSerializer(job, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        }) 
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        job = Job.objects.get(id=pk)
-        if request.user.id != job.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if job.sold == 'sold':
-            job.sold = 'not_sold'
-            job.is_active = True
-        else:
-            job.sold = 'sold'
-            job.is_active = False
-        job.save()
-        return Response({
-            'success': True,
-            'data': JobSerializer(job, many = False).data
-        })
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = []
-        return [permission() for permission in permission_classes]
-    
-
-class ServiceViewSrt(viewsets.ModelViewSet):
-    serializer_class = ServiceSerializer
-    queryset = Service.objects.filter(is_active=True).order_by('-id')
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = ServicelistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-    
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        old_price = data.get('old_price')
-        # condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =request.FILES.get('image') 
-        address =data.get('address')
-        phone_number =data.get('phone_number')
-        service_type= data.get('service_type')
-        experience_years = data.get('experience_years')
-        availability = data.get('availability')
-        
-        service = Service.objects.create(
-            user=request.user,
-            description=description,
-            price=price,
-            old_price=old_price,
-            # condition = condition,
-            category_id=category,
-            district_id=district,
-            address=address,
-            phone_number=phone_number,
-            service_type=service_type,
-            experience_years=experience_years,
-            availability=availability  
+    def get_queryset(self):
+        image_prefetch = Prefetch(
+            'image',
+            queryset=Image.objects.only('id', 'image'),
+            to_attr='prefetched_images'
         )
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            service.image.add(img)
-        return Response({
-                'success': True,
-                'data': ServiceSerializer(service, many = False).data
-            })
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        service = self.get_object()
-        if request.user.id != service.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  service.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            service.image.add(img)
-            return Response({
-                'success': True,
-                'data': ServiceSerializer(service, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        }) 
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        service = Service.objects.get(id=pk)
-        if request.user.id != service.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if service.sold == 'sold':
-            service.sold = 'not_sold'
-            service.is_active = True
-        else:
-            service.sold = 'sold'
-            service.is_active = False
-        service.save()
-        return Response({
-            'success': True,
-            'data': ServiceSerializer(service, many = False).data
-        })
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = []
-        return [permission() for permission in permission_classes]
 
+        return (
+            Product.objects
+            .filter(is_active=True)
+            .select_related('category', 'region', 'user', 'model')
+            .prefetch_related(image_prefetch)
             
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            service = Service.objects.get(id=kwargs['pk'])
-        except Service.DoesNotExist:
-            return Response({"detail": "service not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        Service.objects.filter(id=service.id).update(views_count=F('views_count') + 1)
-        service.refresh_from_db()
-
-        serializer = ServiceSerializer(service, context={'request': request})
-        return Response(serializer.data)
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            service = self.get_object()  
-            if request.user.id != job.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(job.image.all()) 
-            service.delete()
-            for img in images:
-                if not img.service.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-            
+            .annotate(
+                like_count=Count('likes', distinct=True),
+                dislike_count=Count('dislikes', distinct=True)
+            )
+    )
+     
     @action(methods=['get'], detail=False)
-    def get(self,request):
+    def search(self, request):
+        queryset = self.get_queryset()
+        q = request.query_params.get('q', '')
+
+        if q:
+            queryset = queryset.filter(Q(title__icontains=q) |
+                                       Q(description__icontains=q)|
+                                       Q(model__name__icontains=q)| 
+                                       Q(category__name__icontains=q))
+
+        page = PageNumberPagination()
+        page.page_size = P_NUM
+        page_qs = page.paginate_queryset(queryset, request)
+
+        serializer = ProductSerializer(
+            page_qs, many=True, context={'request': request}
+        )
+        return page.get_paginated_response(serializer.data)
+       
+    def list(self, request):
+        queryset = self.get_queryset()
+        filters = {}
+
+        qp = request.query_params
+
+        if title := qp.get("title"):
+            filters["title__icontains"] = title
+
+        if sold := qp.get("sold"):
+            if sold in ["sold", "not_sold"]:
+                filters["sold"] = sold
+
+        if exchange := qp.get("exchange"):
+            if exchange in ["True", "False"]:
+                filters["exchange"] = exchange == "True"
+
+        if trade := qp.get("trade"):
+            if trade in ["True", "False"]:
+                filters["trade"] = trade == "True"
+
+        if category_name := qp.get("category_name"):
+            filters["category__name__icontains"] = category_name
+
+        if user := qp.get("user"):
+            filters["user_id"] = user
+
+        if region := qp.get("region"):
+            filters["region_id"] = region
+
+        if category := qp.get("category"):
+            filters["category_id"] = category
+
+        if price := qp.get("price"):
+            try:
+                price = int(price)
+                filters["price__gte"] = price - 50000
+                filters["price__lte"] = price + 50000
+            except ValueError:
+                pass
+
+        queryset = queryset.filter(**filters)
+
+        page = PageNumberPagination()
+        page.page_size = P_NUM
+        page_qs = page.paginate_queryset(queryset, request)
+
+        serializer = ProductSerializer(
+            page_qs, many=True, context={'request': request}
+        )
+        return page.get_paginated_response(serializer.data)
+
+
+    def retrieve(self, request, *args, **kwargs):
+        product = self.get_queryset().filter(id=kwargs['pk']).first()
+        if not product:
+            return Response({"detail": "Product not found"}, status=404)
+
+        # atomic view count
+        Product.objects.filter(id=product.id).update(
+            views_count=F('views_count') + 1
+        )
+        product.views_count += 1  # refresh qilmasdan
+
+        related_products = (
+            self.get_queryset()
+            .filter(category=product.category)
+            .exclude(id=product.id)
+            .order_by('-created_at')[:20]
+        )
+
         return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "phone_number": "+998900601044",
-            "service_type": "str url :/api/product/get-service-type/",
-            "experience_years":"int",
-            "availability":"boll" 
-            
+            'product': ProductDetailSerializer(
+                product, context={'request': request}
+            ).data,
+            'products': ProductSerializer(
+                related_products, many=True, context={'request': request}
+            ).data
         })
-        
 
-class HouseholdItemsViewSet(viewsets.ModelViewSet):
-    serializer_class = HouseholdItemsSerializer
-    queryset = HouseholdItems.objects.filter(is_active=True).order_by('-id')
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = HouseholdItemslistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-    
-    def create(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         data = request.data
-        description = data.get('description')
+        id = kwargs['pk']
+        title = data.get('title')
         price = data.get('price')
-        old_price = data.get('old_price')
-        condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =request.FILES.get('image') 
-        address =data.get('address')
-        produced =data.get('produced')
-        phone_number =data.get('phone_number')
-        hourse_type = data.get('hourse_type')
+        region = data.get('region')
+        category = data.get('category')
         model = data.get('model')
-        experience_years = data.get('experience_years')
-        
-        household_item = HouseholdItems.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            old_price = old_price,
-            condition = condition,
-            category_id = category,
-            district_id = district,
-            address = address,
-            produced = produced,
-            phone_number = phone_number,
-            hourse_type = hourse_type,
-            model = model,
-            experience_years = experience_years
-            )
-        image = request.FILES.get('image')
-        if image:   
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            household_item.image.add(img)
+        description = data.get('description')
+        address = data.get('address')
+        phone_number = data.get('phone_number')
+
+        # try:
+        product = Product.objects.select_related('category', 'region', 'user').get(id=id)
+        if request.user.id != product.user.id:
+            return Response({
+                "success": False,
+                "permissions": False
+            })
+        if title:
+            product.title = title
+
+        if price is not None:
+            old_price = product.price
+            price = Decimal(price)
+
+            if price != old_price:
+                product.price = price
+                product.save(update_fields=['price'])
+
+                send_price_notifications.delay(
+                    product.id,
+                    str(old_price),
+                    str(price)
+                )
+        if region:
+            product.region_id = region
+        if category:
+            product.category_id = category
+        if model:
+            product.model_id = model
+        if description:
+            product.description = description
+        if address:
+            product.address = address
+        if phone_number:
+            product.phone_number = phone_number
+        product.save()
+
         return Response({
-                'success': True,
-                'data': HouseholdItemsSerializer(household_item, many = False).data
-            })
-
-            
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            hourse = HouseholdItems.objects.get(id=kwargs['pk'])
-        except HouseholdItems.DoesNotExist:
-            return Response({"detail": "hourse not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        HouseholdItems.objects.filter(id=hourse.id).update(views_count=F('views_count') + 1)
-        hourse.refresh_from_db()
-
-        serializer = HouseholdItemsSerializer(hourse, context={'request': request})
-        return Response(serializer.data)
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            household_item = self.get_object()  
-            if request.user.id != household_item.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(household_item.image.all()) 
-            household_item.delete()
-            for img in images:
-                if not img.householditems_set.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "produced": "2025-09-01  null  ",
-            "phone_number": "+998900601044",
-            "hourse_type": "str  url :/api/product/get-hoursehold-type/",
-            "model": "str max 100 ",
-            "experience_years": "int   null "
+            "success": True,
+            'data': ProductSerializer(product, many=False, context={'request': request}).data
         })
-        
+
     @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        household_item = self.get_object()
-        if request.user.id != household_item.user.id:
+    def sold(self, request, pk=None):
+        product = Product.objects.get(id=pk)
+        if request.user.id != product.user.id:
             return Response({
                 'success':False,
                 'permissions':False
             })
-        count =  household_item.image.all().count()
+        if product.sold == 'sold':
+            product.sold = 'not_sold'
+            # product.is_active = True
+        else:
+            product.sold = 'sold'
+            # product.is_active = False
+        product.save()
+        return Response({
+            'success': True,
+            'data': ProductSerializer(product, many = False, context={'request': request}).data
+        })
+    
+    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
+    def add_img(self, request, pk=None):
+        product = self.get_object()
+         
+        if request.user.id != product.user.id:
+            return Response({
+                'success':False,
+                'permissions':False
+            })
+        count =  product.image.all().count()
         if count >= 5:
           return Response({
                 'success':False,
@@ -1508,154 +482,106 @@ class HouseholdItemsViewSet(viewsets.ModelViewSet):
                 'count':count
             }) 
         image = request.FILES.get('image')
+        if image.split('.')[-1].lower() not in ['jpg','jpeg','png','webp']:
+            return Response({
+                "success": False,
+                "error": "Rasmlar faqat jpg, jpeg, png, webp formatlarida bo‘lishi kerak"
+            })
         if image:
             img = Image.objects.create(image=image, user=request.user) 
-            household_item.image.add(img)
+            product.image.add(img)
             return Response({
                 'success': True,
-                'data': HouseholdItemsSerializer(household_item, many = False).data
+                'data': ProductSerializer(product, many = False, context={'request': request}).data
             })
         return Response({
             'success': False,
             'error': 'Image not provided'
-        })
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        household_item = HouseholdItems.objects.get(id=pk)
-        if request.user.id != household_item.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if household_item.sold == 'sold':
-            household_item.sold = 'not_sold'
-            household_item.is_active = True
-        else:
-            household_item.sold = 'sold'
-            household_item.is_active = False
-        household_item.save()
-        return Response({
-            'success': True,
-            'data': HouseholdItemsSerializer(household_item, many = False).data
-        })
-    
-    
-class SportingGoodsViewSet(viewsets.ModelViewSet):
-    serializer_class = SportingGoodsSerializer
-    queryset = SportingGoods.objects.filter(is_active=True).order_by('-id')
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    def list(self, request, *args, **kwargs):
-        paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
-
-        serializer = SportingGoodslistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
         })
     
     def create(self, request, *args, **kwargs):
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        old_price = data.get('old_price')
-        condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =request.FILES.get('image') 
-        address =data.get('address')
-        produced =data.get('produced')
-        phone_number =data.get('phone_number')
-        sport_type = data.get('sport_type')
-        brand = data.get('brand')
-        model = data.get('model')
-        
-        sporting_goods = SportingGoods.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            old_price = old_price,
-            condition = condition,
-            category_id = category,
-            district_id = district,
-            address = address,
-            produced = produced,
-            phone_number = phone_number,
-            sport_type = sport_type,
-            brand = brand,
-            model = model
-            )
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-            sporting_goods.image.add(img)
-        return Response({
-                'success': True,
-                'data': SportingGoodsSerializer(sporting_goods, many = False).data
-            })
-    
+        try:
+            images = request.FILES.getlist('images')
+            if len(images) > 5:
+                return Response({
+                    "success": False,
+                    "error": "5 tadan ko‘p rasm yuklab bo‘lmaydi"
+                })
+
+            ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp']
+
+            for i in images:
+                ext = i.name.split('.')[-1].lower()
+                if ext not in ALLOWED_EXT:
+                    return Response({
+                        "success": False,
+                        "error": "Rasmlar faqat jpg, jpeg, png, webp formatlarida bo‘lishi kerak"
+                    }, status=400)
             
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            sport = SportingGoods.objects.get(id=kwargs['pk'])
-        except SportingGoods.DoesNotExist:
-            return Response({"detail": "Vehicle not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        SportingGoods.objects.filter(id=sport.id).update(views_count=F('views_count') + 1)
-        sport.refresh_from_db()
-
-        serializer = SportingGoodsSerializer(sport, context={'request': request})
-        return Response(serializer.data)
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
+            user = request.user
+            data = request.data
+            title = data.get('title') # bor 
+            price = data.get('price') # bor
+            region = data.get('region') # bor
+            category =data.get('category') # bor
+            description =data.get('description') # bor
+            address =data.get('address') # bor
+            model =data.get('model') # yo'q
+            phone_number =data.get('phone_number') # bor
+            money_type =data.get('money_type') # bor
+            dostafca = data.get('dostafca') # bor
+            trade =data.get('trade') # bor
+            exchange =data.get('exchange') # bor
+            lan = data.get('lan')
+            lat = data.get('lat')
+            
+            product = Product.objects.create(
+                title= title,
+                price=price,
+                region_id=region,
+                category_id=category,
+                description= description,
+                address=address,
+                user=user,
+                phone_number=phone_number,
+                money_type=money_type,
+                trade=trade,
+                dostafca=dostafca,
+                exchange=exchange,
+                lan=lan,
+                lat=lat,
+                is_active=False
+                
+            )
+            if model:
+                product.model_id = model
+            product.save()
+            img = Image.objects.bulk_create([Image(image=image, user=request.user) for image in images])
+            product.image.set(img)
+            notify_followers_new_product.delay(product.id)
+            return Response(ProductSerializer(product, context={'request': request}).data)
         except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-   
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e)
+                }   
+            )
+    
     def destroy(self, request, *args, **kwargs):
         try:
-            sporting_goods = self.get_object()  
-            if request.user.id != sporting_goods.user.id:
+            product = self.get_object()
+            if product.user != request.user:
                 return Response({
-                    'success':False,
-                    'permissions':False
+                    "success": False,
+                    "permissions": False
                 })
-            images = list(sporting_goods.image.all()) 
-            sporting_goods.delete()
-            for img in images:
-                if not img.sportinggoods_set.exists():
-                    img.delete()
-
+            for i in product.image.all():
+                i.image.delete(save=False)
+                i.delete()
+                
+              
+            product.delete()
             return Response({
                 "success": True
             })
@@ -1664,307 +590,77 @@ class SportingGoodsViewSet(viewsets.ModelViewSet):
                 "success": False,
                 "error": str(e)
             })
-    
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "produced": "2025-09-01  null  ",
-            "phone_number": "+998900601044",
-            "electronic_type": "str  url :/api/product/get-sport-type/",
-            "brand": "str max 100 ",
-            "model": "str max 100 "
-        })
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        sporting_goods = self.get_object()
-        if request.user.id != sporting_goods.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  sporting_goods.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            sporting_goods.image.add(img)
-            return Response({
-                'success': True,
-                'data': SportingGoodsSerializer(sporting_goods, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        })
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        sporting_goods = SportingGoods.objects.get(id=pk)
-        if request.user.id != sporting_goods.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if sporting_goods.sold == 'sold':
-            sporting_goods.sold = 'not_sold'
-            sporting_goods.is_active = True
-        else:
-            sporting_goods.sold = 'sold'
-            sporting_goods.is_active = False
-        sporting_goods.save()
-        return Response({
-            'success': True,
-            'data': SportingGoodsSerializer(sporting_goods, many = False).data
-        })
 
     
-class PetViewSet(viewsets.ModelViewSet):
-    serializer_class = PetSerializer
-    queryset = Pet.objects.filter(is_active=True).order_by('-id')
-    
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve','get']:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [permission() for permission in permission_classes]
-    
-    def list(self, request, *args, **kwargs):
+    @action(methods=['get'], detail=False, permission_classes=[IsAuthenticated])
+    def my_product(self,request):
+        product = Product.objects.filter(user=request.user).order_by('-id')
+
+        return Response(
+           ProductSerializer(product, many=True).data
+        )
+
+    @action(methods=['get'], detail=False, permission_classes=[IsStaff])
+    def product_false(request):
+        filters = {"is_active": False}
+
+        region = request.query_params.get("region")
+        if region:
+            filters["region_id"] = region
+        
+        category = request.query_params.get('category')
+        if category:
+            filters['category'] = category
+
+        user = request.query_params.get('user')
+        if user:
+            filters['user_id'] = user
+
+        price = request.query_params.get('price')
+        if price:
+            try:
+                price = int(price)
+                filters['price__gte'] = price - 50000   # masalan 25 mingdan past 20 ming
+                filters['price__lte'] = price + 50000  # yuqoriga 30 ming
+            except : pass
+        all_data = Product.objects.filter(**filters).select_related('region','category','model','user',).order_by("-id")
+        # Paginatsiya
+        serializers = ProductSerializer(all_data, many=True, context={'request': request})
         paginator = PageNumberPagination()
-        paginator.page_size = P_NUM
-        result_page = paginator.paginate_queryset(self.queryset, request)
+        paginator.page_size = 5 # har bir sahifada 20 tadan
+        result_page = paginator.paginate_queryset(serializers.data, request)
 
-        serializer = PetlistSerializer(result_page, many=True)
-        return paginator.get_paginated_response({
-            "success": True,
-            "data": serializer.data
-        })
-    
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        description = data.get('description')
-        price = data.get('price')
-        old_price = data.get('old_price')
-        condition =data.get('condition')
-        category =data.get('category')
-        district =data.get('district')
-        image =request.FILES.get('image') 
-        address =data.get('address')
-        phone_number =data.get('phone_number')
-        animal_type = data.get('animal_type')
-        breed = data.get('breed')
-        age = data.get('age')
+        return paginator.get_paginated_response(result_page)
         
-        pet = Pet.objects.create(
-            user = request.user,
-            description = description,
-            price = price,
-            old_price = old_price,
-            condition = condition,
-            category_id = category,
-            district_id = district,
-            address = address,
-            phone_number = phone_number,
-            animal_type = animal_type,
-            breed = breed,
-            age = age
-            )
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user)
-            pet.image.add(img)  # `Image` modelida `file = models.ImageField(...)` bo‘lishi kerak
-        return Response({   
-                'success': True,
-                'data': PetSerializer(pet, many = False).data
-            })
-    
-            
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            pet = Pet.objects.get(id=kwargs['pk'])
-        except Pet.DoesNotExist:
-            return Response({"detail": "Vehicle not found."}, status=404)
-
-        # Atomik inkrement (race condition bo‘lmasligi uchun)
-        Pet.objects.filter(id=pet.id).update(views_count=F('views_count') + 1)
-        pet.refresh_from_db()
-
-        serializer = PetSerializer(pet, context={'request': request})
-        return Response(serializer.data)
-    
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if request.user.id != instance.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            serializer = self.get_serializer(instance, data=request.data, partial=True)  
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "success": True,
-                    "data": serializer.data
-                })
-            return Response({
-                "success": False,
-                "errors": serializer.errors
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-    
-    def destroy(self, request, *args, **kwargs):
-        try:
-            pet = self.get_object()  
-            if request.user.id != pet.user.id:
-                return Response({
-                    'success':False,
-                    'permissions':False
-                })
-            images = list(pet.image.all()) 
-            pet.delete()
-            for img in images:
-                if not img.pet_set.exists():
-                    img.delete()
-
-            return Response({
-                "success": True
-            })
-        except Exception as e:
-            return Response({
-                "success": False,
-                "error": str(e)
-            })
-   
-    @action(methods=['get'], detail=False)
-    def get(self,request):
-        return Response({
-            # "name":"str max 55 ",
-            "description":"str  max 500  null  ",
-            "price":"int",
-            "old_price":"int  null",
-            "condition":"str  name  url: /api/product/get-condition/    ",
-            # "sold":"str  name  url: /api/product/get-sold/    ",
-            "category":"int  sub-category id  url /api/product/sub-category/1/  1 bu category id url :/api/product/get-category/ ",
-            "district":"int  district id url : /api/product/get-district/1/  1 bu region id url : /api/product/get-region/",
-            "image":"file  jpg  png " ,
-            "address":"str  max 500  null " ,
-            "phone_number": "+998900601044",
-            "animal_type": "str  url :/api/product/get-animal-type/",
-            "breed": "str max 100 ",
-            "age": "int   null "
-        })
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def add_img(self, request, pk=None):
-        pet = self.get_object()
-        if request.user.id != pet.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        count =  pet.image.all().count()
-        if count >= 5:
-          return Response({
-                'success':False,
-                'limit':'5 ta rasmgacha yuklash mumkin',
-                'count':count
-            }) 
-        image = request.FILES.get('image')
-        if image:
-            img = Image.objects.create(image=image, user=request.user) 
-            pet.image.add(img)
-            return Response({
-                'success': True,
-                'data': PetSerializer(pet, many = False).data
-            })
-        return Response({
-            'success': False,
-            'error': 'Image not provided'
-        })
-    
-    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated])
-    def sold(self, request, pk=None):
-        pet = Pet.objects.get(id=pk)
-        if request.user.id != pet.user.id:
-            return Response({
-                'success':False,
-                'permissions':False
-            })
-        if pet.sold == 'sold':
-            pet.sold = 'not_sold'
-            pet.is_active = True
-        else:
-            pet.sold = 'sold'
-            pet.is_active = False
-        pet.save()
-        return Response({
-            'success': True,
-            'data': PetSerializer(pet, many = False).data
-        })
-    
 
 class FavoriteViewSet(viewsets.ModelViewSet):
-    serializer_class = FavoriteSerializer 
+    serializer_class = LikeSerializer 
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         
         return Response({
             "success": True,
-            "data": FavoriteSerializer(self.get_queryset(), many=True).data
+            "data": LikeSerializer(self.get_queryset(), many=True).data
         })
 
-    @action(methods=['get'], detail=False)
-    def count(self, request):
-        user = request.user
-        favorite_count = Favorite.objects.filter(user=user).count()
-        return Response({
-            'success': True,
-            'favorite_count': favorite_count
-        })
+
     
     def get_queryset(self):
-        return Favorite.objects.filter(user=self.request.user).select_related("user").order_by('-id')
+        return Like.objects.filter(user=self.request.user).select_related("user", "product").order_by('-id')
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        content_type = data.get('content_type')  # masalan: "job"
+        data = request.data# masalan: "job"
         object_id = data.get('object_id')
 
-        try:
-            content_type = ContentType.objects.get(id=content_type)
-           
-        except ContentType.DoesNotExist:
-            return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
-        if Dislike.objects.filter(user=request.user, content_type=content_type, object_id=object_id).exists():
+        if Dislike.objects.filter(user=request.user, product_id=object_id).exists():
             return Response({'success': False, 'message': 'Avval dislike bosilgan'}, status=400)
-        favorite, created = Favorite.objects.get_or_create(
-            user=request.user,
-            content_type=content_type,
-            object_id=object_id
-        )
         
+        favorite, created = Like.objects.get_or_create(
+            user=request.user,
+            product_id=object_id
+        )
+
         if created == False:
             favorite.delete()
             return Response({
@@ -1972,14 +668,14 @@ class FavoriteViewSet(viewsets.ModelViewSet):
                 'message': "like o'chirildi:"
             })
 
-        return Response({'success': True, 'message': 'Sevimlilarga qo‘shildi'})
+        return Response({'success': True, 'message': 'Like qo‘shildi'})
 
     def destroy(self, request, *args, **kwargs):
-        # instance = self.get_object()
-        # self.perform_destroy(instance)
+        instance = self.get_object()
+        self.perform_destroy(instance)
         return Response({
-            # 'success': True,
-            'message': ''
+            'success': True,
+            'message': 'Like o‘chirildi'
         })
 
 
@@ -1994,36 +690,22 @@ class DislikeViewSet(viewsets.ModelViewSet):
             "data": DislikeSerializer(self.get_queryset(), many=True).data
         })
 
-    @action(methods=['get'], detail=False)
-    def count(self, request):
-        user = request.user
-        favorite_count = Dislike.objects.filter(user=user).count()
-        return Response({
-            'success': True,
-            'dislike_count': favorite_count
-        })
+
     
     def get_queryset(self):
-        return Dislike.objects.filter(user=self.request.user).select_related("user").order_by('-id')
+        return Dislike.objects.filter(user=self.request.user).select_related("user", "product").order_by('-id')
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        content_type = data.get('content_type')  # masalan: "job"
         object_id = data.get('object_id')
 
-        try:
-            content_type = ContentType.objects.get(id=content_type)
-           
-        except ContentType.DoesNotExist:
-            return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
-        
-        if Favorite.objects.filter(user=request.user, content_type=content_type, object_id=object_id).exists():
+
+        if Like.objects.filter(user=request.user, product_id=object_id).exists():
             return Response({'success': False, 'message': 'Avval like bosilgan'}, status=400)
         
         favorite, created = Dislike.objects.get_or_create(
             user=request.user,
-            content_type=content_type,
-            object_id=object_id
+            product_id=object_id
         )
 
         if created == False:
@@ -2036,11 +718,11 @@ class DislikeViewSet(viewsets.ModelViewSet):
         return Response({'success': True, 'message': 'Dislike qo‘shildi'})
 
     def destroy(self, request, *args, **kwargs):
-        # instance = self.get_object()
-        # self.perform_destroy(instance)
+        instance = self.get_object()
+        self.perform_destroy(instance)
         return Response({
-            # 'success': True,
-            'message': ''
+            'success': True,
+            'message': 'Dislike o‘chirildi'
         })
 
 
@@ -2067,29 +749,23 @@ class ComplaintViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs ):
         data = request.data
         user = request.user
-        content_type = data['content_type']
-        object_id = data['object_id']
+        product_id = data['object_id']
         text = data['text']
-        try:
-            content_type = ContentType.objects.get(id=content_type)
-           
-        except ContentType.DoesNotExist:
-            return Response({'success': False, 'message': 'Noto‘g‘ri content_type'}, status=400)
+
         complaint, created = Complaint.objects.get_or_create(
             user=user,
-            content_type=content_type,
-            object_id=object_id
+            product_id=product_id
         )
         complaint.text = text
         complaint.save()
-        serializer = ComplaintSerializer(complaint, many= False)
+        serializer = ComplaintSerializer(complaint, many= False,context={'request':request})
         return Response(serializer.data)
     
     @action(methods=['get'],detail=False)
     def is_saw_true(self, request, *args, **kwargs):
         if request.user.is_staff:
             complaint= Complaint.objects.filter(is_saw=True).order_by('-id')
-            serializer = ComplaintSerializer(complaint, many=True)
+            serializer = ComplaintSerializer(complaint, many=True, context={'request':request})
             return Response(serializer.data)
         return Response({'success': False})
     
@@ -2118,8 +794,3 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             'message': 'Complaint o‘chirib bo‘lmaydi'
         })
     
-        
-        
-        
-        
-        

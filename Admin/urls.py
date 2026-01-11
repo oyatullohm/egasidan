@@ -17,7 +17,7 @@ urlpatterns = [
      path('save-token/', save_fcm_token, name='save_fcm_token'),
     path('api/', include('main.urls')),
     path('', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
+    # path('accounts/', include('allauth.urls')),
 
 ]
 if settings.DEBUG:

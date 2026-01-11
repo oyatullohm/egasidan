@@ -1,21 +1,13 @@
-from dj_rest_auth.registration.serializers import RegisterSerializer
+# from dj_rest_auth.registration.serializers import RegisterSerializer
+from announcement.models import Product, Image
 from rest_framework import serializers
 from .models import *
-class CustomRegisterSerializer(RegisterSerializer):
-    username = None  # ✅ Usernameni butunlay olib tashlaymiz
 
-    def get_cleaned_data(self):
-        return {
-            'password1': self.validated_data.get('password1', ''),
-            'password2': self.validated_data.get('password2', ''),
-            'email': self.validated_data.get('email', ''),
-          
-        }
         
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id','email','phone','first_name','last_name','is_staff','is_active']
+        fields = ['id','phone','image','first_name','last_name','is_staff','is_active']
     
 class MessageSerializer(serializers.ModelSerializer):
     i = serializers.SerializerMethodField()
@@ -29,28 +21,78 @@ class MessageSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user'):
             return obj.sender.id == request.user.id
         return False
-    
+
+class ProductShortSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'price', 'image']
+
+    def get_image(self, obj):
+        images = getattr(obj, 'prefetched_images', [])
+        if images:
+            request = self.context.get('request')
+            return request.build_absolute_uri(images[0].image.url)
+        return None
+
+
+
 class ChatRoomSerializer(serializers.ModelSerializer):
+    product = ProductShortSerializer(read_only=True)
     user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
+
     class Meta:
         model = ChatRoom
-        fields = ['id','user', 'user_1','user_2','owner','last_message', 'user_2', 'room_name', 'created_at']
-    
+        fields = [
+            'id',
+            'product',
+            'user',
+            'user_1',
+            'user_2',
+            'owner',
+            'last_message',
+            'room_name',
+            'created_at'
+        ]
+
     def get_user(self, obj):
         request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            if request.user.id != obj.user_1.id:
-                return UserSerializer(obj.user_1).data
+        if request.user.id == obj.user_1_id:
             return UserSerializer(obj.user_2).data
-        return None
-    
-    def get_last_message(self,obj):
-        message =  obj.messages.order_by("-timestamp").first()
-        if message:
-            return MessageSerializer(message).data
-        return None
-    
+        return UserSerializer(obj.user_1).data
+
+    def get_last_message(self, obj):
+        if not obj.last_message_time:
+            return None
+        return {
+            'content': obj.last_message_content,
+            'timestamp': obj.last_message_time,
+            'sender_id': obj.last_message_sender_id,
+        }
+
+class FollowingSerializer(serializers.ModelSerializer):
+    following = UserSerializer(read_only=True)  # kimga obuna bo‘lganman
+
+    class Meta:
+        model = UserFollow
+        fields = ['id', 'following', 'follower','created_at']
+
+
+
+class FollowerSerializer(serializers.ModelSerializer):
+    follower = UserSerializer(read_only=True)  # menga kim obuna bo‘lgan
+
+    class Meta:
+        model = UserFollow
+        fields = ['id', 'follower', 'created_at']
+
+class BannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banner
+        fields = ['id','image']
+
 # class DeviceTokenSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = DeviceToken
