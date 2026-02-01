@@ -2,7 +2,7 @@
 from announcement.models import Product, Image
 from rest_framework import serializers
 from .models import *
-
+from django.db.models import Q
         
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     i = serializers.SerializerMethodField()
     sender = UserSerializer(read_only=True)
+    
     class Meta:
         model = Message
         fields = ['id', 'i', 'sender', 'room', 'image', 'content', 'timestamp', ]
@@ -37,40 +38,56 @@ class ProductShortSerializer(serializers.ModelSerializer):
         return None
 
 
-
 class ChatRoomSerializer(serializers.ModelSerializer):
-    product = ProductShortSerializer(read_only=True)
     user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
+    unread_count = serializers.IntegerField(source='unread_count_db', read_only=True)
 
     class Meta:
         model = ChatRoom
         fields = [
             'id',
-            'product',
+            'property',
             'user',
             'user_1',
             'user_2',
             'owner',
             'last_message',
             'room_name',
-            'created_at'
+            'created_at',
+            'unread_count'
         ]
 
     def get_user(self, obj):
         request = self.context.get('request')
-        if request.user.id == obj.user_1_id:
+        if request.user.id == obj.user_1.id:
             return UserSerializer(obj.user_2).data
         return UserSerializer(obj.user_1).data
 
     def get_last_message(self, obj):
-        if not obj.last_message_time:
+        # Agar annotate orqali kelgan bo‘lsa
+        if hasattr(obj, 'last_message_time'):
+            if not obj.last_message_time:
+                return None
+            return {
+                'content': obj.last_message_content,
+                'timestamp': obj.last_message_time,
+                'sender_id': obj.last_message_sender_id,
+            }
+
+        # Agar annotate YO‘Q bo‘lsa (masalan chat_create)
+        last_message = obj.messages.order_by('-timestamp').first()
+        if not last_message:
             return None
+
         return {
-            'content': obj.last_message_content,
-            'timestamp': obj.last_message_time,
-            'sender_id': obj.last_message_sender_id,
+            'content': last_message.content,
+            'timestamp': last_message.timestamp,
+            'sender_id': last_message.sender_id,
         }
+
+
+
 
 class FollowingSerializer(serializers.ModelSerializer):
     following = UserSerializer(read_only=True)  # kimga obuna bo‘lganman

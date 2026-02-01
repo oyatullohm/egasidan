@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
-from django.db.models import OuterRef, Subquery,Prefetch ,Q, Max
+from django.db.models import OuterRef, Subquery,Prefetch ,Q, Max, Count
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
@@ -20,13 +20,8 @@ from .models import FCMToken
 from .serializers import *
 import random
 import json
-from .utils import set_verify_code, get_verify_email_by_code, delete_verify_code
+from .utils import *
 User = get_user_model()
-
-
-import random
-def random_number():
-    return  random.randint(0,9999)
 
 
 @api_view(["GET"])
@@ -186,15 +181,9 @@ def chat_list(request):
     chats = (
         ChatRoom.objects
         .filter(Q(user_1=user) | Q(user_2=user))
-        .select_related('product', 'user_1', 'user_2', 'owner')
-        .prefetch_related(
-            Prefetch(
-                'product__image',
-                queryset=Image.objects.only('id', 'image'),
-                to_attr='prefetched_images'
-            )
-        )
+        .select_related('property', 'user_1', 'user_2', 'owner')
         .annotate(
+            # 🔹 oxirgi xabar
             last_message_content=Subquery(
                 last_message_qs.values('content')[:1]
             ),
@@ -203,6 +192,14 @@ def chat_list(request):
             ),
             last_message_sender_id=Subquery(
                 last_message_qs.values('sender_id')[:1]
+            ),
+
+            # 🔹 unread count (eng muhim joy)
+            unread_count_db=Count(
+                'messages',
+                filter=Q(
+                    messages__flowed=False
+                ) & ~Q(messages__sender=user),
             )
         )
         .order_by('-last_message_time')
