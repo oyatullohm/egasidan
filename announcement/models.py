@@ -59,6 +59,7 @@ class Image(models.Model):
 
 
 class Product(models.Model):
+
     SOLD_CHOICES = [
         ('sold', 'Sotilgan'),
         ('not_sold', 'Sotilmagan'),
@@ -73,23 +74,23 @@ class Product(models.Model):
     region = models.ForeignKey(Region, on_delete=models.CASCADE) # hududi
     sold = models.CharField(max_length=55, choices=SOLD_CHOICES, default='not_sold') # sotilgan yoki sotilmaganligi
     category = models.ForeignKey(Category, on_delete=models.CASCADE,db_index=True) # kategoriyasi
-    model = models.ForeignKey(Model, on_delete=models.CASCADE, null=True, blank=True) # modeli
+    model = models.ForeignKey(Model, on_delete=models.CASCADE, null=True, blank=True) # modeli masalam kia
     image = models.ManyToManyField('Image',blank=True)# rasmlari
     price = models.DecimalField(max_digits=14,decimal_places=0) # narxi
-    
-    money_type = models.CharField(max_length=10, choices=MONEY_CHOICES, default='UZS')# valyutasi
+    money_type = models.CharField(max_length=10, choices=MONEY_CHOICES, default='UZS')# valyutasi UZS  USD
     trade  = models.BooleanField(default=False)# arzonlashtirish mumkinligi
     exchange = models.BooleanField(default=False)# almashish mumkinligi
     dostafca = models.BooleanField(default=False)# dostafka borligi
     address = models.TextField(blank=True)# manzili
     phone_number = models.CharField(max_length=13)# telefon raqami
     description = models.TextField(blank=True, null=True)# mahsulot haqida qo'shimcha ma'lumot
-    is_active = models.BooleanField(default=True)# faol yoki nofaol
+    
+    is_active = models.BooleanField(default=True)# faol yoki nofaol    
     is_status = models.BooleanField(default=False)# vip e'lon
     views_count = models.PositiveIntegerField(default=0)# ko'rishlar soni
     created_at = models.DateTimeField(auto_now_add=True)# yaratildi
-
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')# foydalanuvchi
+    
     lan = models.CharField(max_length=50, blank=True, null=True)# kenglik
     lat = models.CharField(max_length=50, blank=True, null=True)# uzunlik
 

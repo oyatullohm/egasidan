@@ -20,7 +20,7 @@ from .models import FCMToken
 from .serializers import *
 import random
 import json
-
+from .utils import set_verify_code, get_verify_email_by_code, delete_verify_code
 User = get_user_model()
 
 
@@ -53,13 +53,10 @@ class RegisterView(APIView):
 
         data = request.data
         phone = data.get('phone')
-        request.session['phone'] = phone
+        onesignal_player_id = data.get('firebase_token')
         code = random_number()
-        request.session['code_hash'] = salted_hmac(
-            'sms',
-            str(code)
-        ).hexdigest()
-        request.session.set_expiry(300)  
+        set_verify_code(code, phone)
+
         if data.get('phone') and CustomUser.objects.filter(phone=phone).exists():
             user = CustomUser.objects.get(phone=phone)
 
@@ -72,9 +69,10 @@ class RegisterView(APIView):
         user = CustomUser.objects.create_user(
             username=phone,
             phone=phone,
-            # password=phone
+            
         )
-        
+        user.onesignal_player_id = onesignal_player_id
+        user.save()
         if user:
             # refresh = RefreshToken.for_user(user)
             return Response({
@@ -89,45 +87,41 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        request_phone = request.data.get('phone')
-        request_code = request.data.get('code')
-
-        phone = request.session.get('phone')
-        code_hash = request.session.get('code_hash')
-
-        if not all([phone, code_hash]):
-            return Response({'error': 'Session expired'}, status=400)
-
-        check_hash = salted_hmac(
-            'sms',
-            str(request_code)
-        ).hexdigest()
-
-        if phone == request_phone and check_hash == code_hash:
+        phone = request.data.get('phone')
+        onesignal_player_id = request.data.get('firebase_token')
+        if phone:
             try:
                 user = CustomUser.objects.get(phone=phone)
+                user.onesignal_player_id = onesignal_player_id
+                user.save()
             except CustomUser.DoesNotExist:
                 return Response({'error': 'User not found'}, status=404)
+        code = random_number()
+        set_verify_code(code, phone)
+        return Response({"data":'otp yuborildi', "code":code}, status=401)
 
-            refresh = RefreshToken.for_user(user)
+class Vetifay(APIView):
+    def post(self, request):
+        code = request.data.get('code')
+        
+        data = get_verify_email_by_code(code)
+        phone = data['phone']
+        user = CustomUser.objects.get(phone=phone)
+        delete_verify_code(code)
+        refresh = RefreshToken.for_user(user)
 
-            # session tozalaymiz
-            request.session.flush()
-            player_id = request.data.get('player_id')
-            if player_id:
-                user.onesignal_player_id = player_id
-                user.save()
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': {
-                    'id': user.id,
-                    'phone': user.phone,
-                    'is_staff': user.is_staff
-                }
-            }, status=200)
-
-        return Response({'error': 'Invalid code'}, status=401)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': user.id,
+                # 'email': user.email,
+                'phone': user.phone,
+                # 'role': user.role,
+                # 'is_confirmation': user.is_confirmation
+            }
+        }, status=200)
+        
 
 
 class RefreshTokenView(APIView):

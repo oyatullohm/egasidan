@@ -44,6 +44,7 @@ class Banner(models.Model):
     def __str__(self):
         return f"Banner {self.id}"
 
+
 class ChatRoom(models.Model):
     product = models.ForeignKey(
         'announcement.Product', on_delete=models.CASCADE, related_name="chat_rooms"
@@ -91,7 +92,6 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} in {self.room}"
-
 
 
 class FCMToken(models.Model):

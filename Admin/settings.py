@@ -42,28 +42,27 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django.contrib.sites',
 
-    # Local apps
     'main',
     'announcement',
 
-    # Third-party
-    # 'corsheaders',
+
     'rest_framework',
-    # 'rest_framework.authtoken',
     'rest_framework_simplejwt',
 
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
-    # 'allauth.socialaccount.providers.google',
-
-    # 'dj_rest_auth',
-    # 'dj_rest_auth.registration',
 ]
 
-# SITE_ID = 1
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
 
 TEMPLATES = [
     {
