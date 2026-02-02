@@ -7,6 +7,7 @@ admin.site.register(Region)
 admin.site.register(Product)
 admin.site.register(Complaint)
 admin.site.register(Image)
+admin.site.register(Model)
 
 admin.site.register(Dislike)
 

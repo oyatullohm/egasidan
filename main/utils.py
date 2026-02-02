@@ -2,7 +2,7 @@ from django.core.cache import cache
 import random
 def random_number():
     while True:
-        code = random.randint(10000, 99999)
+        code = random.randint(100000, 999999)
         if not cache.get(f"verify:{code}"):
             return code
 VERIFY_TTL = 240  # 2 minut
