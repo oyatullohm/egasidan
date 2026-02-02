@@ -1,6 +1,6 @@
+from django.db.models import OuterRef, Subquery,Prefetch ,Q, Max, Count
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
-from django.db.models import OuterRef, Subquery,Prefetch ,Q, Max, Count
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt

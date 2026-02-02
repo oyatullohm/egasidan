@@ -4,6 +4,8 @@ from django.http import FileResponse
 from django.conf import settings
 from django.conf.urls.static import static
 import os
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
 def firebase_sw(request):
     file_path = os.path.join(settings.BASE_DIR, 'static', 'firebase-messaging-sw.js')
     return FileResponse(open(file_path, 'rb'), content_type='application/javascript')
@@ -11,7 +13,10 @@ def firebase_sw(request):
 from main.views import chat_page , send_message_view, save_fcm_token
 
 urlpatterns = [
-    path('firebase-messaging-sw.js', firebase_sw, name='firebase_sw'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    # Brauzerda sinash uchun Swagger interfeysi
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    # path('firebase-messaging-sw.js', firebase_sw, name='firebase_sw'),
     path('chat/<int:room_id>/send/',send_message_view, name='send_message'),
     path('chat/<int:room_id>/', chat_page, name='chat_page'),
      path('save-token/', save_fcm_token, name='save_fcm_token'),
