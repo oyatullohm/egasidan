@@ -47,7 +47,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         model = ChatRoom
         fields = [
             'id',
-            'property',
+            'product',
             'user',
             'user_1',
             'user_2',

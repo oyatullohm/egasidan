@@ -122,7 +122,6 @@ class Vetifay(APIView):
         }, status=200)
         
 
-
 class RefreshTokenView(APIView):
     def post(self, request):
         refresh_token = request.data.get('refresh')
@@ -135,7 +134,6 @@ class RefreshTokenView(APIView):
             return Response({'access': access_token}, status=status.HTTP_200_OK)
         except:
             return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
 
 
 @api_view(['POST'])
@@ -240,7 +238,7 @@ def message_create(request, message_id):
         image=request.FILES.get('image')
     )
 
-    send_message_notification(message, chat_room, user)
+    # send_message_notification(message, chat_room, user)
 
     serializer = MessageSerializer(
         message,
