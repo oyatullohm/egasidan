@@ -63,7 +63,7 @@ class RegionSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    image = ImageSerializer(read_only=True)
+    image = ImageSerializer(many=True,read_only=True)
     model = serializers.StringRelatedField()
     class Meta:
         model = Product
