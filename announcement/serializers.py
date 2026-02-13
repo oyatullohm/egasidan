@@ -1,7 +1,12 @@
 from rest_framework import serializers
 from .models import *
 
-class   ModelSerializer(serializers.ModelSerializer):
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = '__all__'
+        
+class ModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Model
         fields = '__all__'
@@ -58,18 +63,18 @@ class RegionSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+    image = ImageSerializer(read_only=True)
     model = serializers.StringRelatedField()
     class Meta:
         model = Product
         fields = '__all__'
 
-    def get_image(self, obj):
-        images = getattr(obj, 'prefetched_images', [])
-        if images:
-            request = self.context.get('request')
-            return request.build_absolute_uri(images[0].image.url)
-        return None
+    # def get_image(self, obj):
+    #     images = getattr(obj, 'prefetched_images', [])
+    #     if images:
+    #         request = self.context.get('request')
+    #         return request.build_absolute_uri(images[0].image.url)
+    #     return None
     
     def get_model(self, obj):
         return obj.model.name if obj.model else None
