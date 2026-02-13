@@ -11,7 +11,7 @@ from decimal import Decimal
 from .serializers import *
 from .decorators import *
 from .models import *
-P_NUM = 20
+P_NUM = 4
 
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
