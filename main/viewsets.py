@@ -61,7 +61,7 @@ class BannerViewSet(viewsets.ModelViewSet):
     serializer_class = BannerSerializer
     permission_classes = [AllowAny]
     http_method_names = ['get']
-    pagination_class = Paginator
+    # pagination_class = Paginator
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()
 
