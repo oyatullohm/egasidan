@@ -98,6 +98,7 @@ class LoginView(APIView):
         code = random_number()
         set_verify_code(code, phone)
         if phone=="+998900601044":
+
             refresh = RefreshToken.for_user(user)
             return Response({
             'refresh': str(refresh),
