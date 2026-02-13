@@ -59,8 +59,8 @@ class FollowViewSet(viewsets.ModelViewSet):
 class BannerViewSet(viewsets.ModelViewSet):
     queryset = Banner.objects.all()
     serializer_class = BannerSerializer
-    permission_classes = [IsStaff]
-    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+    permission_classes = [AllowAny]
+    http_method_names = ['get']
     pagination_class = Paginator
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()
