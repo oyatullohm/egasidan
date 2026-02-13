@@ -556,8 +556,9 @@ class ProductViewSet(viewsets.ModelViewSet):
             if model:
                 product.model_id = model
             product.save()
-            img = Image.objects.bulk_create([Image(image=image, user=request.user) for image in images])
-            product.image.set(img)
+            for i in  images:
+                img = Image.objects.create(image=i,user=request.user)
+                product.image.add(img)
             notify_followers_new_product.delay(product.id)
             return Response(ProductSerializer(product, context={'request': request}).data)
         except Exception as e:
