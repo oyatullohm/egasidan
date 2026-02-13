@@ -281,7 +281,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return (
             Product.objects
-            .filter(is_active=True)
+            .all()
             .select_related('category', 'region', 'user', 'model')
             .prefetch_related(image_prefetch)
             
