@@ -36,9 +36,13 @@ def get_user(request):
 @permission_classes([IsAuthenticated])
 def user_update(request):
     user = request.user
-    user.first_name = request.data['first_name']
-    user.last_name = request.data['last_name']
-    user.image = request.data['image']
+    if request.data.get('first_name'):
+        user.first_name = request.data.get('first_name')
+    if request.data.get('last_name'):
+        user.last_name = request.data.get('last_name')
+    if request.data.get('image'):
+        user.image = request.data.get('image')
+    
     user.save()
     return Response(UserSerializer(user, many= False).data)
 
