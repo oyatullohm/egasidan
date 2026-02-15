@@ -807,14 +807,18 @@ class PriceWatchViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return PriceWatch.objects.filter(user=self.request.user).select_related('user', 'product')
     
-    def create(self,request):
-        product_id = request.data.get(product_id)
-        product   = Product.objects.get(id=product_id)
-        pricewatch =  PriceWatch.objects.create(
+    def create(self, request):
+        product_id = request.data.get('product_id')
+
+        product = Product.objects.get(id=product_id)
+
+        pricewatch = PriceWatch.objects.create(
             user=request.user,
-            product = product,
+            product=product,
             last_price=product.price
-            )
-        serializers = PriceWatchSerializer(pricewatch)
-        return Response(serializers.data)
+        )
+
+        serializer = PriceWatchSerializer(pricewatch)
+        return Response(serializer.data)
+
         
