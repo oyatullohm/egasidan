@@ -422,9 +422,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 product.price = price
                 product.save(update_fields=['price'])
                 try:
-                    pricewatch =  PriceWatch.objects.get(product=product)
-                    pricewatch.last_price = price
-                    pricewatch.save()
+                    PriceWatch.objects.filter(product=product).update(last_price=price) 
                 except:pass
                 send_price_notifications.delay(
                     product.id,
