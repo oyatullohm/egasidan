@@ -80,7 +80,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.model.name if obj.model else None
 
 class PriceWatchSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(many=True,read_only=True)
+    product = ProductSerializer(read_only=True)
     class Meta:
         model = PriceWatch
         fields = ('id', 'user', 'product', 'last_price', 
