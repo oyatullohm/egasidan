@@ -396,6 +396,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         id = kwargs['pk']
         title = data.get('title')
         price = data.get('price')
+        
         region = data.get('region')
         category = data.get('category')
         model = data.get('model')
@@ -420,7 +421,11 @@ class ProductViewSet(viewsets.ModelViewSet):
             if price != old_price:
                 product.price = price
                 product.save(update_fields=['price'])
-
+                try:
+                    pricewatch =  PriceWatch.objects.get(product=product)
+                    pricewatch.last_price = price
+                    pricewatch.save()
+                except:pass
                 send_price_notifications.delay(
                     product.id,
                     str(old_price),
@@ -794,4 +799,22 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             'success': False,
             'message': 'Complaint o‘chirib bo‘lmaydi'
         })
+
+class PriceWatch(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PriceWatchSerializer
     
+    def get_queryset(self):
+        return PriceWatch.objects.fiter(user=self.request.user).select_related('user', 'product')
+    
+    def create(self,request):
+        product_id = request.data.get(product_id)
+        product   = Product.objects.get(id=product_id)
+        pricewatch =  PriceWatch.objects.create(
+            user=request.user,
+            product = product,
+            last_price=product.price
+            )
+        serializers = PriceWatchSerializer(pricewatch)
+        return Response(serializers.data)
+        

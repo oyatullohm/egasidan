@@ -79,6 +79,13 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_model(self, obj):
         return obj.model.name if obj.model else None
 
+class PriceWatchSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(many=True,read_only=True)
+    class Meta:
+        model = PriceWatch
+        fields = ('id', 'user', 'product', 'last_price', 
+                  'created_at')
+
 class ImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     product = serializers.SerializerMethodField()
