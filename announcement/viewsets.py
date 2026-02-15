@@ -363,7 +363,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
         return page.get_paginated_response(serializer.data)
 
-
     def retrieve(self, request, *args, **kwargs):
         product = self.get_queryset().filter(id=kwargs['pk']).first()
         if not product:
@@ -598,12 +597,12 @@ class ProductViewSet(viewsets.ModelViewSet):
     
     @action(methods=['get'], detail=False, permission_classes=[IsAuthenticated])
     def my_product(self,request):
-        product = Product.objects.filter(user=request.user).order_by('-id')
-
+        product = self.get_queryset().filter(user=request.user).order_by('-id')
         return Response(
            ProductSerializer(product, many=True).data
         )
 
+    
     @action(methods=['get'], detail=False, permission_classes=[IsStaff])
     def product_false(request):
         filters = {"is_active": False}
