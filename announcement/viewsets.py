@@ -800,7 +800,7 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             'message': 'Complaint o‘chirib bo‘lmaydi'
         })
 
-class PriceWatch(viewsets.ModelViewSet):
+class PriceWatchViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = PriceWatchSerializer
     

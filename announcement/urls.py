@@ -14,7 +14,7 @@ router.register(r"product", ProductViewSet, basename='product')
 router.register(r"like", FavoriteViewSet, basename='like')
 router.register(r"dislike", DislikeViewSet, basename='dislike')
 router.register(r"complaint", ComplaintViewSet, basename='complaint')
-# router.register(r"pricewatch", PriceWatch, basename='pricewatch')
+router.register(r"pricewatch", PriceWatchViewSet, basename='pricewatch')
 urlpatterns = [
     path('get-category/', get_category),
     path('get-sub-category/<int:pk>/', get_sub_category),
