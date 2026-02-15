@@ -812,11 +812,12 @@ class PriceWatchViewSet(viewsets.ModelViewSet):
 
         product = Product.objects.get(id=product_id)
 
-        pricewatch = PriceWatch.objects.create(
+        pricewatch = PriceWatch.objects.get_or_create(
             user=request.user,
             product=product,
-            last_price=product.price
         )
+        pricewatch.last_price=product.price
+        pricewatch.save()
 
         serializer = PriceWatchSerializer(pricewatch)
         return Response(serializer.data)

@@ -105,7 +105,7 @@ class PriceWatch(models.Model):
     """ bu mahsulot narxini kuzatish uchun model """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='price_watches')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='price_watches')
-    last_price = models.DecimalField(max_digits=14, decimal_places=0)
+    last_price = models.DecimalField(max_digits=14, decimal_places=0, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
