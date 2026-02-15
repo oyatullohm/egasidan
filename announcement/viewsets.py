@@ -805,7 +805,10 @@ class PriceWatchViewSet(viewsets.ModelViewSet):
     serializer_class = PriceWatchSerializer
     
     def get_queryset(self):
-        return PriceWatch.objects.filter(user=self.request.user).select_related('user', 'product')
+        return PriceWatch.objects.filter(user=self.request.user)\
+            .select_related('user', 'product')\
+            .prefetch_related('product__image')
+        
     
     def create(self, request):
         product_id = request.data.get('product_id')
