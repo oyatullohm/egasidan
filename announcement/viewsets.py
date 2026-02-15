@@ -812,7 +812,7 @@ class PriceWatchViewSet(viewsets.ModelViewSet):
 
         product = Product.objects.get(id=product_id)
 
-        pricewatch = PriceWatch.objects.get_or_create(
+        pricewatch, created = PriceWatch.objects.get_or_create(
             user=request.user,
             product=product,
         )
