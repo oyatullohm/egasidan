@@ -1,4 +1,4 @@
-from .tasks import send_price_notifications,  notify_followers_new_product
+# from .tasks import send_price_notifications,  notify_followers_new_product
 from django.db.models import F , Prefetch, Count ,Q, Exists, OuterRef, Value, Subquery , BooleanField
 from rest_framework.permissions import  AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
@@ -546,11 +546,11 @@ class ProductViewSet(viewsets.ModelViewSet):
                     try:
                         PriceWatch.objects.filter(product=product).update(last_price=price) 
                     except:pass
-                    send_price_notifications.delay(
-                        product.id,
-                        str(old_price),
-                        str(price)
-                    )
+                    # send_price_notifications.delay(
+                    #     product.id,
+                    #     str(old_price),
+                    #     str(price)
+                    # )
             product.save()
             return Response({
                 "success": True,
