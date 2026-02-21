@@ -12,6 +12,8 @@ def firebase_sw(request):
 
 from main.views import chat_page , send_message_view, save_fcm_token
 
+
+
 urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Brauzerda sinash uchun Swagger interfeysi
