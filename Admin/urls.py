@@ -21,7 +21,7 @@ urlpatterns = [
     # path('firebase-messaging-sw.js', firebase_sw, name='firebase_sw'),
     path('chat/<int:room_id>/send/',send_message_view, name='send_message'),
     path('chat/<int:room_id>/', chat_page, name='chat_page'),
-     path('save-token/', save_fcm_token, name='save_fcm_token'),
+    path('save-token/', save_fcm_token, name='save_fcm_token'),
     path('api/', include('main.urls')),
     path('', admin.site.urls),
     # path('accounts/', include('allauth.urls')),
