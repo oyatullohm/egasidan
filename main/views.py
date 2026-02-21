@@ -513,4 +513,3 @@ def get_firebase_key(request):
         'FIREBASE_CONFIG': settings.FIREBASE_CONFIG,
         'FIREBASE_VAPID_KEY': settings.FIREBASE_VAPID_KEY,
     })
-    
