@@ -1,0 +1,22 @@
+from django.core.cache import cache
+import random
+def random_number():
+    while True:
+        code = random.randint(100000, 999999)
+        if not cache.get(f"verify:{code}"):
+            return code
+VERIFY_TTL = 240  # 2 minut
+
+def set_verify_code(code, phone):
+    cache.set(
+        f"verify:{code}",
+        {"phone": phone},
+        timeout=VERIFY_TTL
+    )
+
+def get_verify_email_by_code(code):
+    # print(cache.get(f"verify:{code}"))
+    return cache.get(f"verify:{code}")
+
+def delete_verify_code(code):
+    cache.delete(f"verify:{code}")
