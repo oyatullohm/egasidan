@@ -1,7 +1,8 @@
 # DevSMS API - Python Example
 import requests
+from Admin.settings import SMS_TOKEN
 
-TOKEN = "54caef40bb76fa0cb5dd70b7023984115ed0e5a55adf33f863721bc2f7dde514"
+TOKEN = SMS_TOKEN
 BASE_URL = "https://devsms.uz/api"
 
 headers = {

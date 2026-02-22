@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import timedelta
 import environ
 
+
 # --------------------------------------------------
 # BASE
 # --------------------------------------------------
@@ -14,19 +15,9 @@ SECRET_KEY = env.str('SECRET_KEY')
 
 # firebase_credentials_json = env.str("FIREBASE_CREDENTIALS")
 # FIREBASE_CREDENTIALS = json.loads(firebase_credentials_json)
-FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, "Admin/firebase-key.json")
 
-FIREBASE_SERVER_KEY = env.str('FIREBASE_SERVER_KEY')
-FIREBASE_CONFIG = {
-    'apiKey': env.str('FIREBASE_API_KEY'),
-    'authDomain': env.str('FIREBASE_AUTH_DOMAIN'),
-    'projectId': env.str('FIREBASE_PROJECT_ID'),
-    'storageBucket': env.str('FIREBASE_STORAGE_BUCKET'),
-    'messagingSenderId': env.str('FIREBASE_MESSAGING_SENDER_ID'),
-    'appId': env.str('FIREBASE_APP_ID'),
-}
 
-FIREBASE_VAPID_KEY = env.str('FIREBASE_VAPID_KEY')
+SMS_TOKEN = env.str('SMS_TOKEN')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
