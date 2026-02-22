@@ -17,6 +17,7 @@ SECRET_KEY = env.str('SECRET_KEY')
 # FIREBASE_CREDENTIALS = json.loads(firebase_credentials_json)
 
 
+HOME_URL = env.str('HOME_URL')
 SMS_TOKEN = env.str('SMS_TOKEN')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
