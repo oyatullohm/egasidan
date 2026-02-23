@@ -11,7 +11,7 @@ from django.utils.crypto import salted_hmac
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.shortcuts import render
-from .fcm_service import FCMService
+# from .fcm_service import FCMService
 from django.db import transaction
 from rest_framework import status
 from pyfcm import FCMNotification
@@ -295,13 +295,13 @@ def send_message_notification(message, chat_room, sender):
         'type': 'new_message'
     }
 
-    for token in fcm_tokens:
-        FCMService.send_push_notification(
-            token.token,
-            notification_title,
-            notification_body,
-            data
-        )
+    # for token in fcm_tokens:
+    #     FCMService.send_push_notification(
+    #         token.token,
+    #         notification_title,
+    #         notification_body,
+    #         data
+    #     )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
