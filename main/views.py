@@ -97,7 +97,7 @@ class LoginView(APIView):
                 return Response({'error': 'User not found'}, status=404)
         code = random_number()
         if phone=="+998900601044":
-            code = "601044"
+            code = 601044
         set_verify_code(code, phone)
 
            
