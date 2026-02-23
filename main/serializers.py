@@ -52,6 +52,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             'user_1',
             'user_2',
             'owner',
+            'type',
             'last_message',
             'room_name',
             'created_at',
