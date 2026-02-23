@@ -31,18 +31,31 @@ class ProductShortSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'price', 'image']
 
     def get_image(self, obj):
+        
+        if obj.image.exists():
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.image[0].url)
+        return None
+from announcement.models import Product
+class ProductShortSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField() 
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'price','money_type','image']
+        
+
+    def get_image(self, obj):
         images = getattr(obj, 'prefetched_images', [])
         if images:
             request = self.context.get('request')
             return request.build_absolute_uri(images[0].image.url)
         return None
 
-
 class ChatRoomSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.IntegerField(source='unread_count_db', read_only=True)
-
+    product = ProductShortSerializer(read_only=True)
     class Meta:
         model = ChatRoom
         fields = [
