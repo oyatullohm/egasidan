@@ -102,7 +102,7 @@ class LoginView(APIView):
 
            
             
-        return Response({"data":'otp yuborildi', "code":code}, status=401)
+        return Response({"data":'otp yuborildi', "code":code}, status=200)
 
 class Vetifay(APIView):
     def post(self, request):
