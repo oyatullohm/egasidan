@@ -1,6 +1,7 @@
 from django.db.models import OuterRef, Subquery,Prefetch ,Q, Max, Count
 from rest_framework.decorators import api_view,  permission_classes
 from rest_framework.permissions import  AllowAny, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
@@ -153,113 +154,133 @@ class RefreshTokenView(APIView):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def chat_create(request):
-    user_1 = request.user
-    user_2_id = request.data.get('user_2_id')
-    product = request.data.get('product_id')
-    type = request.data.get('type')
-
     try:
-        user_2 = User.objects.get(id=user_2_id)
-    except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        user_1 = request.user
+        user_2_id = request.data.get('user_2_id')
+        product = request.data.get('product_id')
+        type = request.data.get('type')
 
-    if user_1.id == user_2.id:
-        return Response({'error': 'Cannot create chat with yourself'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user_2 = User.objects.get(id=user_2_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # ChatRoom nomini yaratish (kichik ID birinchi bo'lishi kerak)
-    ids = sorted([user_1.id, user_2.id])
-    room_name = f"chat_{ids[0]}_{ids[1]}"
+        if user_1.id == user_2.id:
+            return Response({'error': 'Cannot create chat with yourself'}, status=status.HTTP_400_BAD_REQUEST)
 
-    chat_room, created = ChatRoom.objects.get_or_create(
+        # ChatRoom nomini yaratish (kichik ID birinchi bo'lishi kerak)
+        ids = sorted([user_1.id, user_2.id])
+        room_name = f"chat_{ids[0]}_{ids[1]}"
 
-        user_1__in=[user_1, user_2],
-        user_2__in=[user_1, user_2],
-        defaults={'user_1': user_1, 'user_2': user_2, 'owner': user_1, 'room_name': room_name}
-    )
-    chat_room.type = type
-    chat_room.product_id = product
-    chat_room.save()
-    
-    serializer = ChatRoomSerializer(chat_room, context={'request': request})
-    return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        chat_room, created = ChatRoom.objects.get_or_create(
+
+            user_1__in=[user_1, user_2],
+            user_2__in=[user_1, user_2],
+            defaults={'user_1': user_1, 'user_2': user_2, 'owner': user_1, 'room_name': room_name}
+        )
+        chat_room.type = type
+        chat_room.product_id = product
+        chat_room.save()
+        
+        serializer = ChatRoomSerializer(chat_room, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+    except Exception as e:
+            return Response({
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def chat_list(request):
-    user = request.user
-    type = request.query_params.get('type')
+    try:
+        user = request.user
+        type = request.query_params.get('type')
 
-    last_message_qs = (
-        Message.objects
-        .filter(room=OuterRef('pk'))
-        .order_by('-timestamp')
-    )
-
-    chats = (
-        ChatRoom.objects
-        .filter(Q(user_1=user) | Q(user_2=user), type=type)
-        .select_related('product', 'user_1', 'user_2', 'owner')
-        .annotate(
-            # 🔹 oxirgi xabar
-            last_message_content=Subquery(
-                last_message_qs.values('content')[:1]
-            ),
-            last_message_time=Subquery(
-                last_message_qs.values('timestamp')[:1]
-            ),
-            last_message_sender_id=Subquery(
-                last_message_qs.values('sender_id')[:1]
-            ),
-
-            # 🔹 unread count (eng muhim joy)
-            unread_count_db=Count(
-                'messages',
-                filter=Q(
-                    messages__flowed=False
-                ) & ~Q(messages__sender=user),
-            )
+        last_message_qs = (
+            Message.objects
+            .filter(room=OuterRef('pk'))
+            .order_by('-timestamp')
         )
-        .order_by('-last_message_time')
-    )
 
-    serializer = ChatRoomSerializer(
-        chats,
-        many=True,
-        context={'request': request}
-    )
-    return Response(serializer.data)
+        chats = (
+            ChatRoom.objects
+            .filter(Q(user_1=user) | Q(user_2=user), type=type)
+            .select_related('product', 'user_1', 'user_2', 'owner')
+            .annotate(
+                # 🔹 oxirgi xabar
+                last_message_content=Subquery(
+                    last_message_qs.values('content')[:1]
+                ),
+                last_message_time=Subquery(
+                    last_message_qs.values('timestamp')[:1]
+                ),
+                last_message_sender_id=Subquery(
+                    last_message_qs.values('sender_id')[:1]
+                ),
 
+                # 🔹 unread count (eng muhim joy)
+                unread_count_db=Count(
+                    'messages',
+                    filter=Q(
+                        messages__flowed=False
+                    ) & ~Q(messages__sender=user),
+                )
+            )
+            .order_by('-last_message_time')
+        )
+        
+        page = PageNumberPagination()
+        page.page_size = 20
+        page_qs = page.paginate_queryset(chats, request)
+        serializer = ChatRoomSerializer(
+            page_qs,
+            many=True,
+            context={'request': request}
+        )
+        return page.get_paginated_response(serializer.data)
+    except Exception as e:
+            return Response({
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def message_create(request, message_id):
-    user = request.user
-
     try:
-        chat_room = ChatRoom.objects.select_related(
-            'user_1',
-            'user_2'
-        ).get(id=message_id)
-    except ChatRoom.DoesNotExist:
-        return Response({'error': 'Chat room not found'}, status=404)
+        user = request.user
 
-    if user.id not in (chat_room.user_1_id, chat_room.user_2_id):
-        return Response({'error': 'Permission denied'}, status=403)
+        try:
+            chat_room = ChatRoom.objects.select_related(
+                'user_1',
+                'user_2'
+            ).get(id=message_id)
+        except ChatRoom.DoesNotExist:
+            return Response({'error': 'Chat room not found'}, status=404)
 
-    message = Message.objects.create(
-        sender=user,
-        room=chat_room,
-        content=request.data.get('content', ''),
-        image=request.FILES.get('image')
-    )
+        if user.id not in (chat_room.user_1_id, chat_room.user_2_id):
+            return Response({'error': 'Permission denied'}, status=403)
 
-    # send_message_notification(message, chat_room, user)
+        message = Message.objects.create(
+            sender=user,
+            room=chat_room,
+            content=request.data.get('content', ''),
+            image=request.FILES.get('image')
+        )
 
-    serializer = MessageSerializer(
-        message,
-        context={'request': request}
-    )
-    return Response(serializer.data, status=201)
+        # send_message_notification(message, chat_room, user)
+
+        serializer = MessageSerializer(
+            message,
+            context={'request': request}
+        )
+        return Response(serializer.data, status=201)
+    except Exception as e:
+            return Response({
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)
 
 def send_message_notification(message, chat_room, sender):
     receiver = (
@@ -306,52 +327,72 @@ def send_message_notification(message, chat_room, sender):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def message_list(request, message_id):
-    user = request.user
     try:
-        chat_room = ChatRoom.objects.select_related('user_1', 'user_2').get(id=message_id)
-    except ChatRoom.DoesNotExist:
-        return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        try:
+            chat_room = ChatRoom.objects.select_related('user_1', 'user_2').get(id=message_id)
+        except ChatRoom.DoesNotExist:
+            return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if user != chat_room.user_1 and user != chat_room.user_2:
-        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        if user != chat_room.user_1 and user != chat_room.user_2:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
-    messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('-id')
-    serializer = MessageSerializer(messages, many=True,context={'request': request})
-    return Response(serializer.data)
+        messages = Message.objects.filter(room=chat_room).select_related('sender','room').order_by('-id')
+        page = PageNumberPagination()
+        page.page_size = 20
+        page_qs = page.paginate_queryset(messages, request)
+        serializer = MessageSerializer(page_qs, many=True,context={'request': request})
+        return page.get_paginated_response(serializer.data)
+    except Exception as e:
+            return Response({
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)
 
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def message_delete(request, pk):
-    user = request.user
     try:
-        message = Message.objects.get(id=pk)
-    except Message.DoesNotExist:
-        return Response({'error': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        try:
+            message = Message.objects.get(id=pk)
+        except Message.DoesNotExist:
+            return Response({'error': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if message.sender != user:
-        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        if message.sender != user:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
-    message.delete()
-    return Response({'success': 'Message deleted'}, status=status.HTTP_200_OK)
+        message.delete()
+        return Response({'success': 'Message deleted'}, status=status.HTTP_200_OK)
+    except Exception as e:
+            return Response({
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def chat_delete(request, pk):
-    user = request.user
     try:
-        chat_room = ChatRoom.objects.get(id=pk)
-    except ChatRoom.DoesNotExist:
-        return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        try:
+            chat_room = ChatRoom.objects.get(id=pk)
+        except ChatRoom.DoesNotExist:
+            return Response({'error': 'Chat room not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if chat_room.owner != user:
-        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-    message = Message.objects.filter(room=chat_room)
-    if message:
-        message.delete()
-    chat_room.delete()
-    return Response({'success': 'Chat room deleted'}, status=status.HTTP_200_OK)
-
+        if chat_room.owner != user:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        message = Message.objects.filter(room=chat_room)
+        if message:
+            message.delete()
+        chat_room.delete()
+        return Response({'success': 'Chat room deleted'}, status=status.HTTP_200_OK)
+    except Exception as e:
+            return Response({
+            "success": False,
+            "error": str(e)  # aynan xato matnini qaytaradi
+        }, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
