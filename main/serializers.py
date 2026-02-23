@@ -23,18 +23,6 @@ class MessageSerializer(serializers.ModelSerializer):
             return obj.sender.id == request.user.id
         return False
 
-class ProductShortSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Product
-        fields = ['id', 'title', 'price', 'image']
-    def get_image(self, obj):
-        first_image = obj.image.first()
-        if first_image:
-            request = self.context.get('request')
-            return request.build_absolute_uri(first_image.image.url)
-        return None
 
 from announcement.models import Product
 class ProductShortSerializer(serializers.ModelSerializer):

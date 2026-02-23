@@ -190,12 +190,21 @@ def chat_create(request):
             "error": str(e)  # aynan xato matnini qaytaradi
         }, status=400)
 
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def chat_list(request):
     try:
         user = request.user
         type = request.query_params.get('type')
+
+        # 🔥 Product images prefetch
+        product_image_prefetch = Prefetch(
+            'product__image',
+            queryset=Image.objects.only('id', 'image').order_by('id'),
+            to_attr='prefetched_images'
+        )
 
         last_message_qs = (
             Message.objects
@@ -207,8 +216,8 @@ def chat_list(request):
             ChatRoom.objects
             .filter(Q(user_1=user) | Q(user_2=user), type=type)
             .select_related('product', 'user_1', 'user_2', 'owner')
+            .prefetch_related(product_image_prefetch)  # 🔥 SHU MUHIM
             .annotate(
-                # 🔹 oxirgi xabar
                 last_message_content=Subquery(
                     last_message_qs.values('content')[:1]
                 ),
@@ -218,31 +227,31 @@ def chat_list(request):
                 last_message_sender_id=Subquery(
                     last_message_qs.values('sender_id')[:1]
                 ),
-
-                # 🔹 unread count (eng muhim joy)
                 unread_count_db=Count(
                     'messages',
-                    filter=Q(
-                        messages__flowed=False
-                    ) & ~Q(messages__sender=user),
+                    filter=Q(messages__flowed=False) &
+                           ~Q(messages__sender=user),
                 )
             )
             .order_by('-last_message_time')
         )
-        
+
         page = PageNumberPagination()
         page.page_size = 20
         page_qs = page.paginate_queryset(chats, request)
+
         serializer = ChatRoomSerializer(
             page_qs,
             many=True,
             context={'request': request}
         )
+
         return page.get_paginated_response(serializer.data)
+
     except Exception as e:
-            return Response({
+        return Response({
             "success": False,
-            "error": str(e)  # aynan xato matnini qaytaradi
+            "error": str(e)
         }, status=400)
 
 @api_view(['POST'])
