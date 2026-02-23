@@ -29,13 +29,13 @@ class ProductShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'title', 'price', 'image']
-
     def get_image(self, obj):
-        images = getattr(obj, 'image', [])
+        images = getattr(obj, 'prefetched_images', [])
         if images:
             request = self.context.get('request')
             return request.build_absolute_uri(images[0].image.url)
         return None
+
 from announcement.models import Product
 class ProductShortSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField() 
