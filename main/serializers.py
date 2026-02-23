@@ -39,7 +39,7 @@ class ProductShortSerializer(serializers.ModelSerializer):
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)  # qarama-qarshi foydalanuvchi
+    user = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.IntegerField(source='unread_count_db', read_only=True)
 
@@ -59,11 +59,11 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             'unread_count'
         ]
 
-    # def get_user(self, obj):
-    #     request = self.context.get('request')
-    #     if request.user.id == obj.user_1.id:
-    #         return UserSerializer(obj.user_2).data
-    #     return UserSerializer(obj.user_1).data
+    def get_user(self, obj):
+        request = self.context.get('request')
+        if request.user.id == obj.user_1.id:
+            return UserSerializer(obj.user_2, context=self.context).data
+        return UserSerializer(obj.user_1, context=self.context).data
 
     def get_last_message(self, obj):
         # Agar annotate orqali kelgan bo‘lsa
