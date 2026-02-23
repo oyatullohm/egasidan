@@ -34,7 +34,7 @@ class ProductShortSerializer(serializers.ModelSerializer):
         
         if obj.image.exists():
             request = self.context.get('request')
-            return request.build_absolute_uri(obj.image[0].url)
+            return obj.image[0].url
         return None
 from announcement.models import Product
 class ProductShortSerializer(serializers.ModelSerializer):
