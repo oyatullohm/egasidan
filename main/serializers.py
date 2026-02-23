@@ -30,10 +30,10 @@ class ProductShortSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'title', 'price', 'image']
     def get_image(self, obj):
-        images = getattr(obj, 'prefetched_images', [])
-        if images:
+        first_image = obj.image.first()
+        if first_image:
             request = self.context.get('request')
-            return request.build_absolute_uri(images[0].image.url)
+            return request.build_absolute_uri(first_image.image.url)
         return None
 
 from announcement.models import Product
