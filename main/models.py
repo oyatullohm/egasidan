@@ -58,7 +58,7 @@ class ChatRoom(models.Model):
     owner = models.ForeignKey( 
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_chats"
     )
-    
+    type = models.CharField(max_length=50, default='buyer')  # yangi maydon
     room_name = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

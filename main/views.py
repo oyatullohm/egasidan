@@ -156,6 +156,7 @@ def chat_create(request):
     user_1 = request.user
     user_2_id = request.data.get('user_2_id')
     product = request.data.get('product_id')
+    type = request.data.get('type')
 
     try:
         user_2 = User.objects.get(id=user_2_id)
@@ -175,7 +176,8 @@ def chat_create(request):
         user_2__in=[user_1, user_2],
         defaults={'user_1': user_1, 'user_2': user_2, 'owner': user_1, 'room_name': room_name}
     )
-    chat_room.product_id=product
+    chat_room.type = type
+    chat_room.product_id = product
     chat_room.save()
     
     serializer = ChatRoomSerializer(chat_room, context={'request': request})
@@ -185,6 +187,7 @@ def chat_create(request):
 @permission_classes([IsAuthenticated])
 def chat_list(request):
     user = request.user
+    type = request.query_params.get('type')
 
     last_message_qs = (
         Message.objects
@@ -194,7 +197,7 @@ def chat_list(request):
 
     chats = (
         ChatRoom.objects
-        .filter(Q(user_1=user) | Q(user_2=user))
+        .filter(Q(user_1=user) | Q(user_2=user), type=type)
         .select_related('product', 'user_1', 'user_2', 'owner')
         .annotate(
             # 🔹 oxirgi xabar
