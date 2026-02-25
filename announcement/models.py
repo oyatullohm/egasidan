@@ -29,7 +29,8 @@ class Category(models.Model):
         else:
             self.level = self.category.level + 1
         super().save(*args, **kwargs)
-
+    def __str__(self):
+        return "{} - {}".format(self.name, self.get_level_display())
 
 class Model(models.Model):
     """ bu mahsulot modeli uchun model """
